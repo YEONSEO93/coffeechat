@@ -232,27 +232,12 @@ app.post('/add', upload.single('img1'), async (req, res) => {
 
 
 
-// Handle fetching a post by ID with error handling
-app.get('/detail/:id', async (req, res) => {
-    try {
-        const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-        if (result) {
-            res.render('detail', { result: result });
-        } else {
-            res.status(404).send('Post not found.');
-        }
-    } catch (err) {
-        console.error('Invalid ID format or database error:', err);
-        res.status(400).send('Invalid ID format or database error.');
-    }
-});
-
-// // Render the edit form with the current post data
-// app.get('/edit/:id', async (req, res) => {
+// // Handle fetching a post by ID with error handling
+// app.get('/detail/:id', async (req, res) => {
 //     try {
 //         const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
 //         if (result) {
-//             res.render('edit', { result: result });
+//             res.render('detail', { result: result });
 //         } else {
 //             res.status(404).send('Post not found.');
 //         }
@@ -262,34 +247,46 @@ app.get('/detail/:id', async (req, res) => {
 //     }
 // });
 
-// // Handle updating a post
-// app.post('/edit/:id', async (req, res) => {
-//     if (req.body.title === '') {
-//         res.status(400).send('Title is required.');
-//     } else {
-//         try {
-//             await db.collection('post').updateOne(
-//                 { _id: new ObjectId(req.params.id) },
-//                 { $set: { title: req.body.title, content: req.body.content } }
-//             );
-//             res.redirect('/list');
-//         } catch (err) {
-//             console.error('Database error occurred:', err);
-//             res.status(500).send('Failed to update the post.');
-//         }
-//     }
-// });
 
-// // Handle deleting a post
-// app.delete('/delete/:id', async (req, res) => {
-//     try {
-//         await db.collection('post').deleteOne({ _id: new ObjectId(req.params.id) });
-//         res.send('Post deleted');
-//     } catch (err) {
-//         console.error('Failed to delete post:', err);
-//         res.status(500).send('Failed to delete the post.');
-//     }
-// });
+
+// Handle fetching a post by ID with error handling
+app.get('/detail/:id', async (req, res) => {
+    try {
+        const post = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        const comments = await db.collection('comment').find({ parentId: new ObjectId(req.params.id) }).toArray();
+        if (post) {
+            res.render('detail', { result: post, result2: comments });
+        } else {
+            res.status(404).send('Post not found.');
+        }
+    } catch (err) {
+        console.error('Invalid ID format or database error:', err);
+        res.status(400).send('Invalid ID format or database error.');
+    }
+});
+
+// Handle adding a comment
+app.post('/comment', async (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).send('You need to log in to add a comment');
+    }
+    try {
+        await db.collection('comment').insertOne({
+            content: req.body.content,
+            writerId: new ObjectId(req.user._id),
+            writer: req.user.username,
+            parentId: new ObjectId(req.body.parentId),
+            createdAt: new Date(),
+        });
+        res.redirect('back');
+    } catch (err) {
+        console.error('Failed to add comment:', err);
+        res.status(500).send('Failed to add comment');
+    }
+});
+
+
+
 
 
 

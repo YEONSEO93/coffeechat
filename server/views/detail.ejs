@@ -25,7 +25,28 @@
                     </p>
         </div>
 
-        <a href="/list">Back to List</a>
+        <h3>Comments</h3>
+        <% if (result2 && result2.length> 0) { %>
+            <% result2.forEach(comment=> { %>
+                <div class="comment">
+                    <p><strong>
+                            <%= comment.writer %>
+                        </strong>: <%= comment.content %>
+                    </p>
+                    <p><small>Posted on: <%= new Date(comment.createdAt).toLocaleString() %></small></p>
+                </div>
+                <% }) %>
+                    <% } else { %>
+                        <p>No comments yet. Be the first to comment!</p>
+                        <% } %>
+
+                            <form action="/comment" method="POST">
+                                <input type="hidden" name="parentId" value="<%= result._id %>">
+                                <textarea name="content" placeholder="Write a comment..." required></textarea><br>
+                                <button type="submit">Submit Comment</button>
+                            </form>
+
+                            <a href="/list">Back to List</a>
 </body>
 
 </html>
