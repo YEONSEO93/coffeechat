@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Posts</title>
+    <link rel="stylesheet" href="/public/main.css"> 
+</head>
+
+<body>
+
+    <%- include('nav.ejs') %>
+
+    <h1>List of Posts</h1>
+    <% if (posts && posts.length> 0) { %> 
+        <% posts.forEach(post=> { %> <!-- Loop through each post -->
+            <div class="list-box">
+                <h4>
+                    <%= post.title %>
+                </h4> <!-- Display post title -->
+                <p>
+                    <%= post.content %>
+                </p> <!-- Display post content -->
+            </div>
+            <% }); %>
+                <% } else { %>
+                    <div class="list-box">
+                        <h4>No posts found</h4> <!-- Message if no posts are found -->
+                    </div>
+                    <% } %>
+                        <a href="/">Go back to Home</a> <!-- Link to go back to the homepage -->
+</body>
+
+</html>
