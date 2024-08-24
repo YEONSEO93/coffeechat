@@ -19,10 +19,8 @@
                         <a href="/detail/<%= post._id %>">
                             <%= post.title %>
                         </a>
-                        <% if (post.user.equals(user._id)) { %> <!-- Only show edit and delete for the post owner -->
-                            <a href="/edit/<%= post._id %>">✏️</a>
-                            <button class="delete" data-id="<%= post._id %>">🗑️</button>
-                            <% } %>
+                        <a href="/edit/<%= post._id %>">✏️</a>
+                        <button class="delete" data-id="<%= post._id %>">🗑️</button>
                     </h4>
                     <p>
                         <%= post.content %>
@@ -34,8 +32,10 @@
                             </p>
                             <p>Posted on: <%= new Date(post.createdAt).toLocaleString() %>
                             </p>
+                            <p>Comments: <%= post.commentCount %>
+                            </p> <!-- Display comment count -->
                 </div>
-                <% }) %>
+                <% }); %>
                     <% } else { %>
                         <div class="list-box">
                             <h4>No posts found</h4>

@@ -140,15 +140,47 @@ app.get('/logout', (req, res) => {
 });
 
 // Serve the list of posts
+// app.get('/list', async (req, res) => {
+//   try {
+//     const posts = await db.collection('post').find().toArray();
+//     res.render('list', { posts: posts, user: req.user });
+//   } catch (err) {
+//     console.error('Failed to fetch posts', err);
+//     res.status(500).send('Failed to fetch posts');
+//   }
+// });
+
+
 app.get('/list', async (req, res) => {
-  try {
-    const posts = await db.collection('post').find().toArray();
-    res.render('list', { posts: posts, user: req.user });
-  } catch (err) {
-    console.error('Failed to fetch posts', err);
-    res.status(500).send('Failed to fetch posts');
-  }
+    try {
+        const posts = await db.collection('post').aggregate([
+            {
+                $lookup: {
+                    from: 'comment',
+                    localField: '_id',
+                    foreignField: 'parentId',
+                    as: 'comments'
+                }
+            },
+            {
+                $addFields: {
+                    commentCount: { $size: '$comments' }
+                }
+            }
+        ]).toArray();
+
+        res.render('list', { posts: posts, user: req.user });
+    } catch (err) {
+        console.error('Failed to fetch posts with comment counts', err);
+        res.status(500).send('Failed to fetch posts');
+    }
 });
+
+
+
+
+
+
 
 // Render the write form
 app.get('/write', (req, res) => {
@@ -225,45 +257,44 @@ app.post('/add', upload.single('img1'), async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-// // Handle fetching a post by ID with error handling
-// app.get('/detail/:id', async (req, res) => {
-//     try {
-//         const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-//         if (result) {
-//             res.render('detail', { result: result });
-//         } else {
-//             res.status(404).send('Post not found.');
-//         }
-//     } catch (err) {
-//         console.error('Invalid ID format or database error:', err);
-//         res.status(400).send('Invalid ID format or database error.');
-//     }
-// });
-
-
-
 // Handle fetching a post by ID with error handling
 app.get('/detail/:id', async (req, res) => {
     try {
-        const post = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-        const comments = await db.collection('comment').find({ parentId: new ObjectId(req.params.id) }).toArray();
-        if (post) {
-            res.render('detail', { result: post, result2: comments });
-        } else {
-            res.status(404).send('Post not found.');
-        }
+        const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        const result2 = await db.collection('comment').find({ parentId: new ObjectId(req.params.id) }).toArray();
+        res.render('detail', { result: result, result2: result2, user: req.user });
     } catch (err) {
         console.error('Invalid ID format or database error:', err);
         res.status(400).send('Invalid ID format or database error.');
     }
 });
+
+app.post('/edit-comment/:id', async (req, res) => {
+    try {
+        await db.collection('comment').updateOne(
+            { _id: new ObjectId(req.params.id), writerId: new ObjectId(req.user._id) },
+            { $set: { content: req.body.content } }
+        );
+        res.redirect('back');
+    } catch (err) {
+        console.error('Failed to edit comment:', err);
+        res.status(500).send('Failed to edit comment.');
+    }
+});
+
+app.post('/delete-comment/:id', async (req, res) => {
+    try {
+        await db.collection('comment').deleteOne({ _id: new ObjectId(req.params.id), writerId: new ObjectId(req.user._id) });
+        res.redirect('back');
+    } catch (err) {
+        console.error('Failed to delete comment:', err);
+        res.status(500).send('Failed to delete comment.');
+    }
+});
+
+
+
+
 
 // Handle adding a comment
 app.post('/comment', async (req, res) => {
@@ -365,3 +396,31 @@ app.delete('/delete/:id', async (req, res) => {
         res.status(500).send('Failed to delete the post.');
     }
 });
+
+
+app.get('/list', async (req, res) => {
+    try {
+        const posts = await db.collection('post').aggregate([
+            {
+                $lookup: {
+                    from: 'comment',
+                    localField: '_id',
+                    foreignField: 'parentId',
+                    as: 'comments'
+                }
+            },
+            {
+                $addFields: {
+                    commentCount: { $size: '$comments' }
+                }
+            }
+        ]).toArray();
+
+        res.render('list', { posts: posts, user: req.user });
+    } catch (err) {
+        console.error('Failed to fetch posts:', err);
+        res.status(500).send('Failed to fetch posts');
+    }
+});
+
+

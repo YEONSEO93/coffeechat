@@ -34,8 +34,18 @@
                         </strong>: <%= comment.content %>
                     </p>
                     <p><small>Posted on: <%= new Date(comment.createdAt).toLocaleString() %></small></p>
+
+                    <% if (comment.writerId.toString()===user._id.toString()) { %>
+                        <form action="/edit-comment/<%= comment._id %>" method="POST" style="display:inline;">
+                            <input type="text" name="content" value="<%= comment.content %>">
+                            <button type="submit">Edit</button>
+                        </form>
+                        <form action="/delete-comment/<%= comment._id %>" method="POST" style="display:inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                        <% } %>
                 </div>
-                <% }) %>
+                <% }); %>
                     <% } else { %>
                         <p>No comments yet. Be the first to comment!</p>
                         <% } %>
