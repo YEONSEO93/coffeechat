@@ -9,29 +9,58 @@
 </head>
 
 <body>
-
     <%- include('nav.ejs') %>
 
         <h1>List of Posts</h1>
         <% if (posts && posts.length> 0) { %>
-            <% posts.forEach(post=> { %> <!-- Loop through each post -->
+            <% posts.forEach(post=> { %>
                 <div class="list-box">
                     <h4>
                         <a href="/detail/<%= post._id %>">
                             <%= post.title %>
                         </a>
-                    </h4> <!-- Display post title -->
+                        <a href="/edit/<%= post._id %>">✏️</a>
+                        <button class="delete" data-id="<%= post._id %>">🗑️</button>
+                    </h4>
                     <p>
                         <%= post.content %>
-                    </p> <!-- Display post content -->
+                    </p>
                 </div>
-                <% }); %>
+                <% }) %>
                     <% } else { %>
                         <div class="list-box">
-                            <h4>No posts found</h4> <!-- Message if no posts are found -->
+                            <h4>No posts found</h4>
                         </div>
                         <% } %>
-                            <a href="/">Go back to Home</a> <!-- Link to go back to the homepage -->
+
+                            <!-- Button to navigate to the write page -->
+                            <div class="write-button">
+                                <a href="/write" class="btn">➕ Write a New Post</a>
+                            </div>
+
+                            <a href="/">Go back to Home</a>
+
+                            <script>
+                                document.querySelectorAll('.delete').forEach(button => {
+                                    button.addEventListener('click', function () {
+                                        const postId = this.dataset.id;
+                                        fetch(`/delete/${postId}`, {
+                                            method: 'DELETE',
+                                        })
+                                            .then(response => {
+                                                if (response.ok) {
+                                                    this.parentElement.parentElement.style.display = 'none';
+                                                } else {
+                                                    alert('Failed to delete the post.');
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.error('Error:', err);
+                                                alert('Error deleting the post.');
+                                            });
+                                    });
+                                });
+                            </script>
 </body>
 
 </html>
