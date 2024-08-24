@@ -247,12 +247,66 @@ app.get('/detail/:id', async (req, res) => {
     }
 });
 
+// // Render the edit form with the current post data
+// app.get('/edit/:id', async (req, res) => {
+//     try {
+//         const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+//         if (result) {
+//             res.render('edit', { result: result });
+//         } else {
+//             res.status(404).send('Post not found.');
+//         }
+//     } catch (err) {
+//         console.error('Invalid ID format or database error:', err);
+//         res.status(400).send('Invalid ID format or database error.');
+//     }
+// });
+
+// // Handle updating a post
+// app.post('/edit/:id', async (req, res) => {
+//     if (req.body.title === '') {
+//         res.status(400).send('Title is required.');
+//     } else {
+//         try {
+//             await db.collection('post').updateOne(
+//                 { _id: new ObjectId(req.params.id) },
+//                 { $set: { title: req.body.title, content: req.body.content } }
+//             );
+//             res.redirect('/list');
+//         } catch (err) {
+//             console.error('Database error occurred:', err);
+//             res.status(500).send('Failed to update the post.');
+//         }
+//     }
+// });
+
+// // Handle deleting a post
+// app.delete('/delete/:id', async (req, res) => {
+//     try {
+//         await db.collection('post').deleteOne({ _id: new ObjectId(req.params.id) });
+//         res.send('Post deleted');
+//     } catch (err) {
+//         console.error('Failed to delete post:', err);
+//         res.status(500).send('Failed to delete the post.');
+//     }
+// });
+
+
+
+
 // Render the edit form with the current post data
 app.get('/edit/:id', async (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/login');
+    }
     try {
-        const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-        if (result) {
-            res.render('edit', { result: result });
+        const post = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        if (post) {
+            if (post.user.equals(req.user._id)) {
+                res.render('edit', { result: post });
+            } else {
+                res.status(403).send('You do not have permission to edit this post.');
+            }
         } else {
             res.status(404).send('Post not found.');
         }
@@ -264,27 +318,51 @@ app.get('/edit/:id', async (req, res) => {
 
 // Handle updating a post
 app.post('/edit/:id', async (req, res) => {
-    if (req.body.title === '') {
-        res.status(400).send('Title is required.');
-    } else {
-        try {
-            await db.collection('post').updateOne(
-                { _id: new ObjectId(req.params.id) },
-                { $set: { title: req.body.title, content: req.body.content } }
-            );
-            res.redirect('/list');
-        } catch (err) {
-            console.error('Database error occurred:', err);
-            res.status(500).send('Failed to update the post.');
+    if (!req.isAuthenticated()) {
+        return res.redirect('/login');
+    }
+    try {
+        const post = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        if (post) {
+            if (post.user.equals(req.user._id)) {
+                if (req.body.title === '') {
+                    res.status(400).send('Title is required.');
+                } else {
+                    await db.collection('post').updateOne(
+                        { _id: new ObjectId(req.params.id) },
+                        { $set: { title: req.body.title, content: req.body.content } }
+                    );
+                    res.redirect('/list');
+                }
+            } else {
+                res.status(403).send('You do not have permission to edit this post.');
+            }
+        } else {
+            res.status(404).send('Post not found.');
         }
+    } catch (err) {
+        console.error('Database error occurred:', err);
+        res.status(500).send('Failed to update the post.');
     }
 });
 
 // Handle deleting a post
 app.delete('/delete/:id', async (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).send('You need to log in to delete a post');
+    }
     try {
-        await db.collection('post').deleteOne({ _id: new ObjectId(req.params.id) });
-        res.send('Post deleted');
+        const post = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        if (post) {
+            if (post.user.equals(req.user._id)) {
+                await db.collection('post').deleteOne({ _id: new ObjectId(req.params.id) });
+                res.send('Post deleted');
+            } else {
+                res.status(403).send('You do not have permission to delete this post.');
+            }
+        } else {
+            res.status(404).send('Post not found.');
+        }
     } catch (err) {
         console.error('Failed to delete post:', err);
         res.status(500).send('Failed to delete the post.');

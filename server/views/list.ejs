@@ -19,8 +19,10 @@
                         <a href="/detail/<%= post._id %>">
                             <%= post.title %>
                         </a>
-                        <a href="/edit/<%= post._id %>">✏️</a>
-                        <button class="delete" data-id="<%= post._id %>">🗑️</button>
+                        <% if (post.user.equals(user._id)) { %> <!-- Only show edit and delete for the post owner -->
+                            <a href="/edit/<%= post._id %>">✏️</a>
+                            <button class="delete" data-id="<%= post._id %>">🗑️</button>
+                            <% } %>
                     </h4>
                     <p>
                         <%= post.content %>
