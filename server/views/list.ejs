@@ -28,6 +28,8 @@
                     <% if (post.imageUrl) { %>
                         <img src="<%= post.imageUrl %>" alt="Post Image" width="200">
                         <% } %>
+                            <p>Posted by: <%= post.username %>
+                            </p>
                             <p>Posted on: <%= new Date(post.createdAt).toLocaleString() %>
                             </p>
                 </div>
