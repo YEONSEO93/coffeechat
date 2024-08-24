@@ -25,6 +25,11 @@
                     <p>
                         <%= post.content %>
                     </p>
+                    <% if (post.imageUrl) { %>
+                        <img src="<%= post.imageUrl %>" alt="Post Image" width="200">
+                        <% } %>
+                            <p>Posted on: <%= new Date(post.createdAt).toLocaleString() %>
+                            </p>
                 </div>
                 <% }) %>
                     <% } else { %>
@@ -33,7 +38,6 @@
                         </div>
                         <% } %>
 
-                            <!-- Button to navigate to the write page -->
                             <div class="write-button">
                                 <a href="/write" class="btn">➕ Write a New Post</a>
                             </div>

@@ -4,19 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List of Posts</title>
+    <title>Post Detail</title>
     <link rel="stylesheet" href="/public/main.css">
 </head>
 
 <body>
-        <%- include('nav.ejs') %>
-    <%= JSON.stringify(result) %>
-    <div class="detail-bg">
-        <h4><%= result.title %></h4>
-        <p><%= result.content %></p>
-    </div>
+    <%- include('nav.ejs') %>
 
+        <div class="detail-bg">
+            <h4>
+                <%= result.title %>
+            </h4>
+            <% if (result.imageUrl) { %>
+                <img src="<%= result.imageUrl %>" alt="Post Image" width="300">
+                <% } %>
+                    <p>
+                        <%= result.content %>
+                    </p>
+                    <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
+                    </p>
+        </div>
 
+        <a href="/list">Back to List</a>
 </body>
 
 </html>

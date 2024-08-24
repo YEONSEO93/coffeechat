@@ -1,138 +1,3 @@
-
-// require('dotenv').config(); // Load environment variables from .env file
-// const express = require('express'); // Import Express framework
-// const app = express(); // Create an Express application instance
-// const { MongoClient, ObjectId } = require('mongodb'); // Import MongoDB client
-// const path = require('path'); // Import path module for working with file and directory paths
-
-// // Middleware to serve static files (like CSS, images, etc.)
-// app.use(express.static(__dirname + '/public'));
-
-// // Set up EJS as the templating engine
-// app.set('view engine', 'ejs');
-// app.set('views', path.join(__dirname, 'views')); // Set the views directory for EJS templates
-
-// // Middleware to parse the body of POST requests
-// app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
-
-// // Start the server on port 8080
-// app.listen(8080, () => {
-//     console.log('Server running at http://localhost:8080');
-// });
-
-// // Serve the homepage (index.html)
-// app.get('/', (req, res) => {
-//     res.sendFile(__dirname + '/index.html'); // Send index.html file as a response
-// });
-
-// let db; // Declare a variable to hold the database connection
-// const url = process.env.DB_URL; // Get MongoDB URL from environment variables
-
-// // Connect to MongoDB
-// MongoClient.connect(url, { useUnifiedTopology: true })
-//     .then((client) => {
-//         console.log('DB connected!'); // Log successful connection
-//         db = client.db('coffeechat_ys'); // Store the database connection
-//     })
-//     .catch((err) => {
-//         console.error('Failed to connect to the database', err); // Log any connection errors
-//     });
-
-// // Serve the list of posts
-// app.get('/list', async (req, res) => {
-//     try {
-//         const posts = await db.collection('post').find().toArray(); // Fetch all posts from the 'post' collection
-//         res.render('list', { posts: posts }); // Render the 'list' EJS template with the posts data
-//     } catch (err) {
-//         console.error('Failed to fetch posts', err); // Log any errors during fetching
-//         res.status(500).send('Failed to fetch posts'); // Send an error response if fetching fails
-//     }
-// });
-
-// // Render the write form
-// app.get('/write', (req, res) => {
-//     res.render('write.ejs');
-// });
-
-// // Handle adding a new post with validation and error handling
-// app.post('/add', async (req, res) => {
-//     if (req.body.title === '') {
-//         res.status(400).send('Title is required.');
-//     } else {
-//         try {
-//             await db.collection('post').insertOne({ title: req.body.title, content: req.body.content });
-//             res.redirect('/list');
-//         } catch (err) {
-//             console.error('Database error occurred:', err);
-//             res.status(500).send('Failed to save the post.');
-//         }
-//     }
-// });
-
-// // Handle fetching a post by ID with error handling
-// app.get('/detail/:id', async (req, res) => {
-//     try {
-//         const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-//         if (result) {
-//             res.render('detail', { result: result });
-//         } else {
-//             res.status(404).send('Post not found.');
-//         }
-//     } catch (err) {
-//         console.error('Invalid ID format or database error:', err);
-//         res.status(400).send('Invalid ID format or database error.');
-//     }
-// });
-
-// // Render the edit form with the current post data
-// app.get('/edit/:id', async (req, res) => {
-//     try {
-//         const result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
-//         if (result) {
-//             res.render('edit', { result: result });
-//         } else {
-//             res.status(404).send('Post not found.');
-//         }
-//     } catch (err) {
-//         console.error('Invalid ID format or database error:', err);
-//         res.status(400).send('Invalid ID format or database error.');
-//     }
-// });
-
-// // Handle updating a post
-// app.post('/edit/:id', async (req, res) => {
-//     if (req.body.title === '') {
-//         res.status(400).send('Title is required.');
-//     } else {
-//         try {
-//             await db.collection('post').updateOne(
-//                 { _id: new ObjectId(req.params.id) },
-//                 { $set: { title: req.body.title, content: req.body.content } }
-//             );
-//             res.redirect('/list');
-//         } catch (err) {
-//             console.error('Database error occurred:', err);
-//             res.status(500).send('Failed to update the post.');
-//         }
-//     }
-// });
-
-// // Handle deleting a post
-// app.delete('/delete/:id', async (req, res) => {
-//     try {
-//         await db.collection('post').deleteOne({ _id: new ObjectId(req.params.id) });
-//         res.send('Post deleted');
-//     } catch (err) {
-//         console.error('Failed to delete post:', err);
-//         res.status(500).send('Failed to delete the post.');
-//     }
-// });
-
-
-
-
-
 require('dotenv').config();
 const express = require('express');
 const app = express();
@@ -143,6 +8,18 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
+const multer = require('multer');
+
+// Configure multer for file upload handling
+const upload = multer({ dest: 'uploads/' });
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const FormData = require('form-data');
+const fs = require('fs');
+
+
+const axios = require('axios');
+
+
 
 // Middleware to serve static files (like CSS, images, etc.)
 app.use(express.static(__dirname + '/public'));
@@ -281,19 +158,125 @@ app.get('/write', (req, res) => {
   res.render('write');
 });
 
-// Handle adding a new post
-app.post('/add', async (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).send('You need to log in to add a post');
-  }
-  try {
-    await db.collection('post').insertOne({ title: req.body.title, content: req.body.content });
-    res.redirect('/list');
-  } catch (err) {
-    console.error('Database error occurred:', err);
-    res.status(500).send('Failed to save the post');
-  }
+// // Handle adding a new post with image upload
+// app.post('/add', upload.single('image'), async (req, res) => {
+//     if (!req.isAuthenticated()) {
+//         return res.status(401).send('You need to log in to add a post');
+//     }
+
+//     let imageUrl = null;
+
+//     if (req.file) {
+//         try {
+//             const form = new FormData();
+//             form.append('file', fs.createReadStream(req.file.path));
+
+//             const response = await fetch('https://api.cloudflare.com/client/v4/accounts/626e6384b0c0fb9f6780cfadeff08425/images/v1', {
+//                 method: 'POST',
+//                 headers: {
+//                     'Authorization': `Bearer ${process.env.CLOUDFLARE_API_KEY}`,
+//                 },
+//                 body: form,
+//             });
+
+//             const data = await response.json();
+
+//             if (data.success) {
+//                 const imageId = data.result.id;
+//                 const accountHash = '946t3Bn7epLNWC96BjzU3Q'; // Your account hash
+//                 imageUrl = `https://imagedelivery.net/${accountHash}/${imageId}/public`; // Use the public variant URL
+//             } else {
+//                 console.error('Error uploading image to Cloudflare:', data.errors);
+//             }
+
+//             // Remove the file from the server after upload
+//             fs.unlinkSync(req.file.path);
+
+//         } catch (err) {
+//             console.error('Failed to upload image:', err);
+//         }
+//     }
+
+//     try {
+//         await db.collection('post').insertOne({
+//             title: req.body.title,
+//             content: req.body.content,
+//             imageUrl: imageUrl,
+//             createdAt: new Date()
+//         });
+//         res.redirect('/list');
+//     } catch (err) {
+//         console.error('Database error occurred:', err);
+//         res.status(500).send('Failed to save the post');
+//     }
+// });
+
+
+
+
+
+
+app.post('/add', upload.single('image'), async (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).send('You need to log in to add a post');
+    }
+
+    let imageUrl = null;
+
+    if (req.file) {
+        try {
+            const formData = new FormData();
+            const fileStream = fs.createReadStream(req.file.path);
+            const contentType = req.file.mimetype;
+
+            // Append the file with the correct content type
+            formData.append('file', fileStream, {
+                contentType: contentType,
+                filename: req.file.originalname
+            });
+
+            const response = await axios.post('https://api.cloudflare.com/client/v4/accounts/626e6384b0c0fb9f6780cfadeff08425/images/v1', formData, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.CLOUDFLARE_API_KEY}`,
+                    ...formData.getHeaders()
+                }
+            });
+
+            const data = response.data;
+
+            if (data.success) {
+                const imageId = data.result.id;
+                const accountHash = '946t3Bn7epLNWC96BjzU3Q'; // Your account hash
+                imageUrl = `https://imagedelivery.net/${accountHash}/${imageId}/public`;
+            } else {
+                console.error('Error uploading image to Cloudflare:', data.errors);
+            }
+
+            // Remove the file from the server after upload
+            fs.unlinkSync(req.file.path);
+
+        } catch (err) {
+            console.error('Failed to upload image:', err);
+        }
+    }
+
+    try {
+        await db.collection('post').insertOne({
+            title: req.body.title,
+            content: req.body.content,
+            imageUrl: imageUrl,
+            createdAt: new Date()
+        });
+        res.redirect('/list');
+    } catch (err) {
+        console.error('Database error occurred:', err);
+        res.status(500).send('Failed to save the post');
+    }
 });
+
+
+
+
 
 
 // Handle fetching a post by ID with error handling
