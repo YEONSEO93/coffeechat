@@ -12,8 +12,8 @@
 
 /* Global Styles */
 * {
-    margin: 0;
-    padding: 0;
+    margin: 10px;
+    padding: 10px;
     box-sizing: border-box;
     font-family: 'Arial', sans-serif;
 }
@@ -83,7 +83,7 @@ a:hover {
 
 .nav .welcome {
     margin-left: auto;
-    margin-right: 20px;
+    margin-right: 10px;
 }
 
 .logout-btn, .login-btn, .signup-btn {
@@ -371,4 +371,29 @@ p {
 
 .container h1:hover {
     color: var(--accent-color);
+}
+
+.user-info {
+    display: flex;
+    align-items: baseline;
+    /* Align text on the baseline for a more natural look */
+    justify-content: flex-start;
+    gap: 8px;
+    /* Add a gap between elements for better spacing */
+    font-size: 1.25rem;
+    /* Adjust overall font size */
+}
+
+.user-info h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    /* Use a color that matches your theme */
+}
+
+.user-info .username {
+    font-weight: 600;
+    /* Semi-bold for emphasis without being too heavy */
+    color: var(--accent-color);
+    /* Use your accent color for a more distinct look */
 }

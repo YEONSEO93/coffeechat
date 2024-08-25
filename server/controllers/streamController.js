@@ -343,6 +343,6 @@ module.exports = {
   startStream,
   viewStream,
   renameStreamController,
-    deleteStreamController
+deleteStreamController
 };
 

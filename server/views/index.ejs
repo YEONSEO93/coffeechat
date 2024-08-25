@@ -10,11 +10,11 @@
 
 <body>
     <nav class="nav">
-        <a class="logo" href="/">Coffee Chat</a>
+        <a class="logo" href="/">Coffee Chat ☕️</a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/posts/list">Posts</a>
-            <a href="/stream/livestream">Live Stream</a>
+            <a href="/stream/livestream">Live Stream     </a>
             <% if (user) { %>
                 <span class="welcome">Welcome, <%= user.username %></span>
                 <a href="/logout" class="logout-btn">Logout</a>
@@ -27,15 +27,14 @@
 
     <main>
         <section class="welcome-section">
-            <h1>Welcome to Coffee Chat</h1>
-            <p>Your place to connect and share your thoughts.</p>
+            <!-- <h1>Welcome to Coffee Chat</h1> -->
+            <h3>Your place to connect and share your thoughts.</h3>
         </section>
 
         <% if (user) { %>
             <section class="user-info">
-                <h2>Your Information</h2>
-                <p>Username: <%= user.username %>
-                </p>
+                <h1>Welcome 👋 <%= user.username %>
+                </h1>
             </section>
 
             <section class="user-posts">
