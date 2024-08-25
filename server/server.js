@@ -32,6 +32,21 @@ const axios = require('axios');
 // Middleware to serve static files (like CSS, images, etc.)
 app.use(express.static(__dirname + '/public'));
 
+
+
+
+
+// middleware to inject user into all views
+app.use((req, res, next) => {
+    res.locals.user = req.user || null; // assuming `req.user` holds the authenticated user
+    next();
+});
+
+
+
+
+
+
 // Set up EJS as the templating engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

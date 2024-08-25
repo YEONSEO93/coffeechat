@@ -22,16 +22,14 @@
                     <li>
                         <%= username %>
                     </li>
-                    <% }); %>
+                    <% }) %>
             </ul>
         </div>
 
-        <!-- Placeholder for chat messages -->
-        <div id="chat-messages">
-            <!-- Messages will be rendered here -->
-        </div>
+        <!-- Chat messages placeholder -->
+        <div id="chat-messages"></div>
 
-        <!-- Form to send new messages -->
+        <!-- Message form -->
         <form id="chat-form">
             <input type="hidden" id="chatroomId" value="<%= chatroom._id %>">
             <textarea id="message" placeholder="Write a message..." required></textarea>
@@ -40,11 +38,8 @@
 
         <script>
             const socket = io();
-
-            // Join the chatroom
             socket.emit('ask-join', '<%= chatroom._id %>');
 
-            // Listen for new messages
             socket.on('newMessage', (data) => {
                 const chatMessages = document.getElementById('chat-messages');
                 if (chatMessages) {
@@ -54,16 +49,12 @@
                 }
             });
 
-            // Handle message form submission
             document.getElementById('chat-form').addEventListener('submit', function (e) {
                 e.preventDefault();
                 const chatroomId = document.getElementById('chatroomId').value;
                 const message = document.getElementById('message').value;
 
-                // Emit the message-send event to match the server's expectation
                 socket.emit('message-send', { msg: message, room: chatroomId });
-
-                // Clear the message input
                 document.getElementById('message').value = '';
             });
         </script>

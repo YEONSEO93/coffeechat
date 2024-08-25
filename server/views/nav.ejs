@@ -1,5 +1,13 @@
 <div class="nav">
     <a class="logo">Coffee Chat</a>
-    <a>Page1</a>
-    <a>Page2</a>
+    <a href="/">Home</a>
+    <a href="/list">Posts</a>
+    <% if (user) { %>
+        <a href="/logout">Logout</a>
+        <span>Welcome, <%= user.username %></span>
+        <a href="/livestream">Live Stream</a>
+        <% } else { %>
+            <a href="/login">Login</a>
+            <a href="/register">Sign Up</a>
+            <% } %>
 </div>

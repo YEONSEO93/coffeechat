@@ -8,6 +8,8 @@
 </head>
 
 <body>
+        <%- include('nav.ejs') %>
+
     <h1>Edit Post</h1>
     <form action="/edit/<%= result._id %>" method="POST">
         <label for="title">Title:</label>
