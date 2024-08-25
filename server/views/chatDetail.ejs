@@ -6,33 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatroom Details</title>
     <link rel="stylesheet" href="/public/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/socket.io@4.7.2/client-dist/socket.io.min.js"></script>
 </head>
 
 <body>
     <%- include('nav.ejs') %>
 
-    <h4>Chatroom Details</h4>
-    <div class="chatroom-details">
-        <p>Chatroom ID: <%= chatroom._id %></p>
-        <p>Members:</p>
-        <ul>
-            <% memberUsernames.forEach(username => { %>
-                <li><%= username %></li>
-            <% }); %>
-        </ul>
-    </div>
+        <h4>Chatroom for Post: <%= chatroom.postTitle %>
+        </h4>
+        <div class="chatroom-details">
+            <p>Members:</p>
+            <ul>
+                <% memberUsernames.forEach(username=> { %>
+                    <li>
+                        <%= username %>
+                    </li>
+                    <% }); %>
+            </ul>
+        </div>
 
-    <!-- Placeholder for chat messages -->
-    <div id="chat-messages">
-        <!-- Messages would be rendered here -->
-    </div>
+        <!-- Placeholder for chat messages -->
+        <div id="chat-messages">
+            <!-- Messages would be rendered here -->
+        </div>
 
-    <!-- Form to send new messages -->
-    <form action="/chat/send" method="POST">
-        <input type="hidden" name="chatroomId" value="<%= chatroom._id %>">
-        <textarea name="message" placeholder="Write a message..." required></textarea>
-        <button type="submit">Send</button>
-    </form>
+        <!-- Form to send new messages -->
+        <form id="chat-form">
+            <input type="hidden" id="chatroomId" value="<%= chatroom._id %>">
+            <textarea id="message" placeholder="Write a message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+
+        <script>
+            const socket = io();
+
+            // Join the chatroom
+            socket.emit('ask-join', '<%= chatroom._id %>');
+
+            // Listen for new messages
+            socket.on('newMessage', (message) => {
+                const chatMessages = document.getElementById('chat-messages');
+                const newMessage = document.createElement('p');
+                newMessage.textContent = message;
+                chatMessages.appendChild(newMessage);
+            });
+
+            // Handle message form submission
+            document.getElementById('chat-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const chatroomId = document.getElementById('chatroomId').value;
+                const message = document.getElementById('message').value;
+
+                socket.emit('message', { msg: message, room: chatroomId });
+
+                // Clear the message input
+                document.getElementById('message').value = '';
+            });
+        </script>
 </body>
 
 </html>

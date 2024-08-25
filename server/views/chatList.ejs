@@ -18,10 +18,10 @@
                     <div class="list-box">
                         <h4>
                             <a href="/chat/detail/<%= chatroom._id %>">
-                                Chats <%= index + 1 %>
+                                Chat for Post: <%= chatroom.postTitle %> <!-- Display post title -->
                             </a>
                         </h4>
-                        <p>Chatroom ID: <%= chatroom._id %>
+                        <p>Created on: <%= new Date(chatroom.date).toLocaleString() %>
                         </p>
                     </div>
                     <% }); %>
