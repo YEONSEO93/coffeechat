@@ -178,12 +178,62 @@ button[type="submit"]:hover {
 
 .post-card {
     background-color: var(--light-text-color);
-    padding: 20px;
+    padding: 0;
+    /* Remove padding to allow the image to be full-width */
     border-radius: 10px;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
     transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
     color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    /* Ensure the image fits within the rounded corners */
 }
+
+.post-image {
+    width: 100%;
+    /* Make the image take up the full width of the card */
+    height: auto;
+    /* Maintain the aspect ratio */
+    display: block;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    transition: transform var(--transition-speed) ease;
+}
+
+.post-content {
+    padding: 15px 20px;
+    /* Add padding to the text content */
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.post-meta {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.post-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 10px;
+}
+
+.comments-section {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+
+
+
 
 .post-card:hover {
     transform: translateY(-5px);
