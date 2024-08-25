@@ -5,20 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Write a Post</title>
+    <link rel="stylesheet" href="/main.css">
+    <script src="/js/main.js"></script>
+
 </head>
 
 <body>
-        <%- include('nav.ejs') %>
+    <%- include('nav.ejs') %>
 
-    <h1>Write a Post</h1>
-<form action="/posts/add" method="POST" enctype="multipart/form-data">
-    <input type="text" name="title" placeholder="Title">
-    <textarea name="content" placeholder="Content"></textarea>
-    <input type="file" name="img1">
-    <button type="submit">Submit</button>
-</form>
+        <div class="form-container">
+            <h1>Write a Post</h1>
+            <form id="postForm" action="/posts/add" method="POST" enctype="multipart/form-data">
+                <input type="text" name="title" placeholder="Title" required>
+                <textarea name="content" placeholder="Content" required></textarea>
 
+                <div class="file-upload-container" id="fileUploadContainer">
+                    <input type="file" id="fileInput" name="img1" accept="image/*">
+                    <div class="file-drag-area" id="fileDragArea">
+                        <p>Drag & Drop your image here or click to select</p>
+                        <img id="filePreview" src="" alt="Image Preview" style="display:none;">
+                    </div>
+                </div>
 
+                <button type="submit" class="btn">Submit</button>
+            </form>
+        </div>
+
+        <script src="/main.js"></script>
 </body>
 
 </html>

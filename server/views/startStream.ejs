@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <a href="/stream/livestream">Start a Live Stream</a>
-    <link href="/public/main.css" rel="stylesheet">
+    <title>Start a Live Stream</title>
+    <link rel="stylesheet" href="/main.css">
 </head>
 
 <body>
@@ -17,7 +17,9 @@
                     <label for="title">Stream Title</label>
                     <input type="text" id="title" name="title" required>
                 </div>
-                <button type="submit">Start Streaming</button>
+                <% if (user && user.canStartStream) { %>
+                    <button type="submit" class="btn">Start Streaming</button>
+                    <% } %>
             </form>
         </div>
 </body>

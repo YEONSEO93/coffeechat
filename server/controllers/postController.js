@@ -32,7 +32,27 @@ const createPost = async (req, res) => {
 
 // const getPosts = async (req, res) => {
 //   try {
-//     const posts = await getDB().collection('post').find().toArray();
+//     const posts = await getDB().collection('post').aggregate([
+//       {
+//         $lookup: {
+//           from: 'comment',
+//           localField: '_id',
+//           foreignField: 'parentId',
+//           as: 'comments'
+//         }
+//       },
+//       {
+//         $addFields: {
+//           commentCount: { $size: '$comments' }
+//         }
+//       },
+//       {
+//         $project: {
+//           comments: 0 // Exclude the comments array, we only need the count
+//         }
+//       }
+//     ]).toArray();
+
 //     res.render('list', { posts, user: req.user });
 //   } catch (err) {
 //     res.status(500).send('Failed to fetch posts');
@@ -42,8 +62,10 @@ const createPost = async (req, res) => {
 
 
 
+
 const getPosts = async (req, res) => {
   try {
+    // Use aggregation to join with the comments collection, count the comments, and sort by createdAt
     const posts = await getDB().collection('post').aggregate([
       {
         $lookup: {
@@ -59,14 +81,19 @@ const getPosts = async (req, res) => {
         }
       },
       {
+        $sort: { createdAt: -1 }  // Sort posts by createdAt in descending order
+      },
+      {
         $project: {
           comments: 0 // Exclude the comments array, we only need the count
         }
       }
     ]).toArray();
 
+    // Render the list view with the sorted posts and comment counts
     res.render('list', { posts, user: req.user });
   } catch (err) {
+    console.error('Failed to fetch posts:', err);
     res.status(500).send('Failed to fetch posts');
   }
 };

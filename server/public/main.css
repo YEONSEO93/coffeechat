@@ -1,0 +1,374 @@
+/* Global Variables */
+:root {
+    --primary-color: #518f8b; /* Muted blue */
+    --secondary-color: #878787; /* Muted teal */
+    --background-color: #f5f5f5; /* Light gray */
+    --accent-color: #cab6b6; /* Soft green */
+    --text-color: #464545; /* Dark gray */
+    --light-text-color: #ffffff; /* White */
+    --border-color: #d1d1d1; /* Light gray */
+    --transition-speed: 0.3s;
+}
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+a:hover {
+    color: var(--accent-color);
+}
+
+/* Navigation Bar */
+.nav {
+    background-color: var(--primary-color);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--light-text-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1000;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.nav:hover {
+    background-color: var(--secondary-color);
+}
+
+.nav .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: logo-fade-in 2s ease-in-out;
+}
+
+@keyframes logo-fade-in {
+    0% { opacity: 0; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.nav-links a {
+    color: var(--light-text-color);
+    margin-left: 20px;
+    text-decoration: none;
+    transition: color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.nav-links a:hover {
+    color: var(--accent-color);
+    transform: translateY(-3px);
+}
+
+.nav .welcome {
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.logout-btn, .login-btn, .signup-btn {
+    background-color: var(--secondary-color);
+    color: var(--light-text-color);
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.logout-btn:hover, .login-btn:hover, .signup-btn:hover {
+    /* background-color: var(--accent-color); */
+    transform: scale(1.05);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: var(--light-text-color);
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: var(--primary-color);
+    transform: translateY(-5px);
+}
+
+/* Form Styles */
+.form-container, .write-button {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: var(--light-text-color);
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.form-container:hover, .write-button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+    border-color: var(--primary-color);
+    background-color: #e0f7fa;
+}
+
+textarea {
+    min-height: 150px;
+}
+
+button[type="submit"] {
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+button[type="submit"]:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-3px);
+}
+
+/* Post Styles */
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.post-card {
+    background-color: var(--light-text-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+    color: var(--text-color);
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.post-title {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    transition: color var(--transition-speed) ease;
+}
+
+.post-title:hover {
+    color: var(--accent-color);
+}
+
+.post-image {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: transform var(--transition-speed) ease;
+}
+
+.post-image:hover {
+    transform: scale(1.05);
+}
+
+.post-meta {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-top: 10px;
+}
+
+.post-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.edit-btn, .delete-btn {
+    background-color: var(--secondary-color);
+    color: var(--light-text-color);
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.edit-btn:hover, .delete-btn:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* Miscellaneous */
+h1, h2, h3, h4 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    transition: color var(--transition-speed) ease;
+}
+
+h1:hover, h2:hover, h3:hover, h4:hover {
+    color: var(--accent-color);
+}
+
+p {
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+/* Chatroom Styles */
+.chatroom-details, #chat-messages {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: var(--light-text-color);
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.chatroom-details:hover, #chat-messages:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+#message {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+}
+
+#message:focus {
+    border-color: var(--primary-color);
+    background-color: #e0f7fa;
+}
+
+#chat-form button {
+    margin-top: 10px;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+#chat-form button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-3px);
+}
+
+/* File Upload Styles */
+.file-upload-container {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: var(--background-color);
+    border-radius: 10px;
+    border: 2px dashed var(--border-color);
+    text-align: center;
+    transition: border-color var(--transition-speed) ease;
+}
+
+.file-upload-container:hover {
+    border-color: var(--primary-color);
+}
+
+.file-drag-area {
+    margin: 10px 0;
+    cursor: pointer;
+    transition: color var(--transition-speed) ease;
+}
+
+.file-drag-area:hover {
+    color: var(--primary-color);
+}
+
+#filePreview {
+    max-width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+    transition: transform var(--transition-speed) ease;
+}
+
+#filePreview:hover {
+    transform: scale(1.05);
+}
+
+/* Error & Success Messages */
+.alert {
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: transform var(--transition-speed) ease;
+}
+
+.alert-danger {
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+}
+
+.alert-success {
+    background-color: var(--secondary-color);
+    color: var(--light-text-color);
+}
+
+.alert:hover {
+    transform: translateY(-3px);
+}
+
+/* 404 Page */
+.container h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    transition: color var(--transition-speed) ease;
+}
+
+.container h1:hover {
+    color: var(--accent-color);
+}

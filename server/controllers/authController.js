@@ -18,8 +18,10 @@ const registerUser = async (req, res) => {
             username: req.body.username,
             password: hashedPassword,
         });
+        req.flash('success_msg', 'You are now registered and can log in!');
         res.redirect('/login');
     } catch (err) {
+        req.flash('error_msg', 'Error registering new user');
         res.status(500).send('Error registering new user');
     }
 };
@@ -33,31 +35,32 @@ const showLoginPage = (req, res) => {
 const loginUser = (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) {
-            console.log('Error during authentication:', err);
+            req.flash('error_msg', 'An error occurred during authentication.');
             return next(err);
         }
         if (!user) {
-            console.log('Authentication failed:', info.message);
+            req.flash('error_msg', 'Invalid username or password.');
             return res.redirect('/login');
         }
         req.logIn(user, (err) => {
             if (err) {
-                console.log('Login error:', err);
+                req.flash('error_msg', 'An error occurred during login.');
                 return next(err);
             }
-            console.log('Login successful:', user);
+            req.flash('success_msg', 'You are now logged in!');
             return res.redirect('/');
         });
     })(req, res, next);
 };
 
-
 // Handle user logout
 const logoutUser = (req, res) => {
     req.logout((err) => {
         if (err) {
+            req.flash('error_msg', 'An error occurred during logout.');
             return next(err);
         }
+        req.flash('success_msg', 'You are logged out');
         res.redirect('/');
     });
 };

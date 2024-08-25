@@ -1,12 +1,15 @@
-<div class="nav">
-    <a class="logo">Coffee Chat</a>
-    <a href="/">Home</a>
-    <a href="/posts/list">Posts</a>
-    <% if (user) { %>
-        <a href="/logout">Logout</a>
-        <span>Welcome, <%= user.username %></span>
-<a href="/stream/livestream">Live Stream</a>        <% } else { %>
-            <a href="/login">Login</a>
-            <a href="/register">Sign Up</a>
-            <% } %>
-</div>
+<nav class="nav">
+    <a class="logo" href="/">Coffee Chat</a>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/posts/list">Posts</a>
+        <a href="/stream/livestream">Live Stream</a>
+        <% if (user) { %>
+            <span class="welcome">Welcome, <%= user.username %></span>
+            <a href="/logout" class="logout-btn">Logout</a>
+            <% } else { %>
+                <a href="/login" class="login-btn">Login</a>
+                <a href="/register" class="signup-btn">Sign Up</a>
+                <% } %>
+    </div>
+</nav>

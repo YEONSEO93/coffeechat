@@ -3,7 +3,7 @@ const MongoStore = require('connect-mongo');
 
 module.exports = (app) => {
   app.use(session({
-    secret: 'your_secret_key',
+    secret: 'default_secret_key',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({

@@ -1,11 +1,8 @@
-//server/routes/authRouthes.js
+// server/routes/authRoutes.js
 
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-
-// Home page route
-router.get('/', (req, res) => res.render('index'));
 
 // Register page route
 router.get('/register', authController.showRegisterPage);

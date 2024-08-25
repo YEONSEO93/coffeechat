@@ -5,24 +5,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Post</title>
+    <link rel="stylesheet" href="/main.css">
+    <script src="/js/main.js"></script>
+
 </head>
 
 <body>
     <%- include('nav.ejs') %>
 
-        <h1>Edit Post</h1>
-        <form action="/posts/edit/<%= result._id %>" method="POST">
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title" value="<%= result.title %>" required><br><br>
-        
-            <label for="content">Content:</label>
-            <textarea id="content" name="content" required><%= result.content %></textarea><br><br>
-        
-            <button type="submit">Update</button>
-        </form>
-        
-        <!-- Add the Back to List link here -->
-        <a href="/posts/list">Back to List</a>
+        <div class="form-container">
+            <h1>Edit Post</h1>
+            <form action="/posts/edit/<%= result._id %>" method="POST" enctype="multipart/form-data">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" value="<%= result.title %>" required><br><br>
+
+                <label for="content">Content:</label>
+                <textarea id="content" name="content" required><%= result.content %></textarea><br><br>
+
+                <div class="file-upload-container" id="fileUploadContainer">
+                    <input type="file" id="fileInput" name="img1" accept="image/*">
+                    <div class="file-drag-area" id="fileDragArea">
+                        <p>Drag & Drop your image here or click to select</p>
+                        <img id="filePreview" src="" alt="Image Preview" style="display:none;">
+                    </div>
+                </div>
+                <% if (result.imageUrl) { %>
+                    <p>Current Image:</p>
+                    <img src="<%= result.imageUrl %>" alt="Current Post Image" width="300"><br><br>
+                    <% } %>
+
+                        <button type="submit">Update</button>
+            </form>
+
+            <!-- Add the Back to List link here -->
+            <a href="/posts/list">Back to List</a>
+        </div>
 
 </body>
 

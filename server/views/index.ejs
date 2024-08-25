@@ -5,22 +5,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
-    <link rel="stylesheet" href="/public/main.css">
+    <link rel="stylesheet" href="/main.css">
 </head>
 
 <body>
-    <%- include('nav.ejs') %>
+    <nav class="nav">
+        <a class="logo" href="/">Coffee Chat</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/posts/list">Posts</a>
+            <a href="/stream/livestream">Live Stream</a>
+            <% if (user) { %>
+                <span class="welcome">Welcome, <%= user.username %></span>
+                <a href="/logout" class="logout-btn">Logout</a>
+                <% } else { %>
+                    <a href="/login" class="login-btn">Login</a>
+                    <a href="/register" class="signup-btn">Sign Up</a>
+                    <% } %>
+        </div>
+    </nav>
 
-        <h1>Welcome to Our Site</h1>
-        <p>This is the homepage of our application.</p>
+    <main>
+        <section class="welcome-section">
+            <h1>Welcome to Coffee Chat</h1>
+            <p>Your place to connect and share your thoughts.</p>
+        </section>
+
         <% if (user) { %>
-            <a href="/posts/write">Write a New Post</a>
-            <a href="/posts/list">View All Posts</a>
+            <section class="user-info">
+                <h2>Your Information</h2>
+                <p>Username: <%= user.username %>
+                </p>
+            </section>
 
-            <a href="/stream/start-stream">Start a Live Stream</a>
+            <section class="user-posts">
+                <h2>Your Posts</h2>
+                <% if (posts && posts.length> 0) { %>
+                    <div class="posts-grid">
+                        <% posts.forEach(post=> { %>
+                            <div class="post-card">
+                                <h3 class="post-title">
+                                    <%= post.title %>
+                                </h3>
+                                <p class="post-content">
+                                    <%= post.content %>
+                                </p>
+                                <% if (post.imageUrl) { %>
+                                    <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image">
+                                    <% } %>
+                                        <p class="post-date">Posted on: <%= new Date(post.createdAt).toLocaleString() %>
+                                        </p>
+                            </div>
+                            <% }) %>
+                    </div>
+                    <% } else { %>
+                        <p>You haven't posted anything yet.</p>
+                        <% } %>
+            </section>
             <% } else { %>
-                <p><a href="/login">Login</a> or <a href="/register">Sign Up</a> to start writing posts!</p>
+                <section class="guest-message">
+                    <p>Please <a href="/login">log in</a> to see your posts.</p>
+                </section>
                 <% } %>
+    </main>
 </body>
 
 </html>
