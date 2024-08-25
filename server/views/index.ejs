@@ -16,6 +16,7 @@
         <% if (user) { %>
             <a href="/logout">Logout</a>
             <span>Welcome, <%= user.username %></span>
+            <a href="/livestream">Live Stream</a>
             <% } else { %>
                 <a href="/login">Login</a>
                 <a href="/register">Sign Up</a>
@@ -26,9 +27,11 @@
     <p>This is the homepage of our application.</p>
     <% if (user) { %>
         <a href="/write">Write a New Post</a>
+        <a href="/start-stream">Start a Live Stream</a> <!-- New link -->
         <% } else { %>
             <p><a href="/login">Login</a> or <a href="/register">Sign Up</a> to start writing posts!</p>
             <% } %>
+
 </body>
 
 </html>

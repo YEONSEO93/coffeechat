@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <% if (stream) { %>
+            <%= stream.title %> - Live Stream
+                <% } else { %>
+                    No Stream Found
+                    <% } %>
+    </title>
+    <link href="/public/main.css" rel="stylesheet">
+</head>
+
+<body>
+    <%- include('nav.ejs') %>
+
+        <% if (stream) { %>
+            <div class="video-section">
+                <iframe src="https://<%= process.env.CLOUDFLARE_DOMAIN %>/<%= stream.stream_id %>/iframe"
+                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                    class="w-full h-full"></iframe>
+            </div>
+            <div>
+                <h1>
+                    <%= stream.title %>
+                </h1>
+                <p>Stream Key: <%= stream.stream_key %>
+                </p>
+            </div>
+            <% } else { %>
+                <p>No live stream found for this user.</p>
+                <% } %>
+</body>
+
+</html>
