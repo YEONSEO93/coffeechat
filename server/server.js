@@ -191,6 +191,78 @@ app.get('/write', (req, res) => {
   res.render('write');
 });
 
+
+
+
+
+
+// app.post('/add', upload.single('img1'), async (req, res) => {
+//   if (!req.isAuthenticated()) {
+//     return res.status(401).send('You need to log in to add a post');
+//   }
+
+//   let imageUrl = null;
+
+//   if (req.file) {
+//     try {
+//       const formData = new FormData();
+//       const fileStream = fs.createReadStream(req.file.path);
+//       const contentType = req.file.mimetype;
+
+//       // Append the file with the correct content type and filename
+//       formData.append('file', fileStream, {
+//         filename: req.file.originalname,
+//         contentType: req.file.mimetype,
+//       });
+
+//       const response = await axios.post(
+//         'https://api.cloudflare.com/client/v4/accounts/626e6384b0c0fb9f6780cfadeff08425/images/v1',
+//         formData,
+//         {
+//           headers: {
+//             'Authorization': `Bearer ${process.env.CLOUDFLARE_API_KEY}`,
+//             ...formData.getHeaders(),
+//           },
+//         }
+//       );
+
+//       const data = response.data;
+
+//       if (data.success) {
+//         const imageId = data.result.id;
+//         const accountHash = '946t3Bn7epLNWC96BjzU3Q'; // Your account hash
+//         imageUrl = `https://imagedelivery.net/${accountHash}/${imageId}/public`;
+//       } else {
+//         console.error('Error uploading image to Cloudflare:', data.errors);
+//       }
+
+//       // Remove the file from the server after upload
+//       fs.unlinkSync(req.file.path);
+
+//     } catch (err) {
+//       console.error('Failed to upload image:', err);
+//     }
+//   }
+
+//   try {
+//     await db.collection('post').insertOne({
+//       title: req.body.title,
+//       content: req.body.content,
+//       imageUrl: imageUrl,
+//       createdAt: new Date(),
+//       user: req.user._id,               // Store the logged-in user's ID
+//       username: req.user.username       // Store the logged-in user's username
+//     });
+//     res.redirect('/list');
+//   } catch (err) {
+//     console.error('Database error occurred:', err);
+//     res.status(500).send('Failed to save the post');
+//   }
+// });
+
+
+
+
 app.post('/add', upload.single('img1'), async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).send('You need to log in to add a post');
@@ -201,22 +273,18 @@ app.post('/add', upload.single('img1'), async (req, res) => {
   if (req.file) {
     try {
       const formData = new FormData();
-      const fileStream = fs.createReadStream(req.file.path);
-      const contentType = req.file.mimetype;
-
-      // Append the file with the correct content type and filename
-      formData.append('file', fileStream, {
+      formData.append('file', fs.createReadStream(req.file.path), {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
       });
 
       const response = await axios.post(
-        'https://api.cloudflare.com/client/v4/accounts/626e6384b0c0fb9f6780cfadeff08425/images/v1',
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
         formData,
         {
           headers: {
             'Authorization': `Bearer ${process.env.CLOUDFLARE_API_KEY}`,
-            ...formData.getHeaders(),
+            ...formData.getHeaders(),  // Automatically includes the proper Content-Type
           },
         }
       );
@@ -225,7 +293,7 @@ app.post('/add', upload.single('img1'), async (req, res) => {
 
       if (data.success) {
         const imageId = data.result.id;
-        const accountHash = '946t3Bn7epLNWC96BjzU3Q'; // Your account hash
+        const accountHash = '946t3Bn7epLNWC96BjzU3Q'; // Replace with your actual account hash
         imageUrl = `https://imagedelivery.net/${accountHash}/${imageId}/public`;
       } else {
         console.error('Error uploading image to Cloudflare:', data.errors);
@@ -235,7 +303,7 @@ app.post('/add', upload.single('img1'), async (req, res) => {
       fs.unlinkSync(req.file.path);
 
     } catch (err) {
-      console.error('Failed to upload image:', err);
+      console.error('Failed to upload image:', err.response?.data || err.message);
     }
   }
 
@@ -254,6 +322,9 @@ app.post('/add', upload.single('img1'), async (req, res) => {
     res.status(500).send('Failed to save the post');
   }
 });
+
+
+
 
 // Handle fetching a post by ID with error handling
 app.get('/detail/:id', async (req, res) => {
