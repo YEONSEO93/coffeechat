@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatroom Details</title>
+    <link rel="stylesheet" href="/public/main.css">
+</head>
+
+<body>
+    <%- include('nav.ejs') %>
+
+    <h4>Chatroom Details</h4>
+    <div class="chatroom-details">
+        <p>Chatroom ID: <%= chatroom._id %></p>
+        <p>Members:</p>
+        <ul>
+            <% memberUsernames.forEach(username => { %>
+                <li><%= username %></li>
+            <% }); %>
+        </ul>
+    </div>
+
+    <!-- Placeholder for chat messages -->
+    <div id="chat-messages">
+        <!-- Messages would be rendered here -->
+    </div>
+
+    <!-- Form to send new messages -->
+    <form action="/chat/send" method="POST">
+        <input type="hidden" name="chatroomId" value="<%= chatroom._id %>">
+        <textarea name="message" placeholder="Write a message..." required></textarea>
+        <button type="submit">Send</button>
+    </form>
+</body>
+
+</html>

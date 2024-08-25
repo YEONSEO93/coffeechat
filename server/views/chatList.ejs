@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Chatrooms</title>
+    <link rel="stylesheet" href="/public/main.css">
+</head>
+
+<body>
+    <%- include('nav.ejs') %>
+
+        <h4>Chats</h4>
+        <div class="white-bg">
+            <% if (chatrooms && chatrooms.length> 0) { %>
+                <% chatrooms.forEach((chatroom, index)=> { %>
+                    <div class="list-box">
+                        <h4>
+                            <a href="/chat/detail/<%= chatroom._id %>">
+                                Chats <%= index + 1 %>
+                            </a>
+                        </h4>
+                        <p>Chatroom ID: <%= chatroom._id %>
+                        </p>
+                    </div>
+                    <% }); %>
+                        <% } else { %>
+                            <p>No chatrooms found.</p>
+                            <% } %>
+        </div>
+</body>
+
+</html>

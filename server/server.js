@@ -424,3 +424,80 @@ app.get('/list', async (req, res) => {
 });
 
 
+
+
+
+app.get('/chat/request', async (req, res) => {
+  try {
+    const chatroomExists = await db.collection('chatroom').findOne({
+      member: { $all: [req.user._id, new ObjectId(req.query.writerId)] }
+    });
+
+    if (!chatroomExists) {
+      await db.collection('chatroom').insertOne({
+        member: [req.user._id, new ObjectId(req.query.writerId)],
+        date: new Date()
+      });
+    }
+
+    res.redirect('/chat/list');
+  } catch (err) {
+    console.error('Error creating chatroom:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+app.get('/chat/list', async (req, res) => {
+  try {
+    const chatrooms = await db.collection('chatroom').find({
+      member: req.user._id
+    }).toArray();
+    
+    res.render('chatList.ejs', { chatrooms: chatrooms });
+  } catch (err) {
+    console.error('Error fetching chatrooms:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+// app.get('/chat/detail/:id', async (req, res) => {
+//   try {
+//     const chatroom = await db.collection('chatroom').findOne({ _id: new ObjectId(req.params.id) });
+    
+//     if (!chatroom) {
+//       return res.status(404).send('Chatroom not found.');
+//     }
+
+//     res.render('chatDetail.ejs', { chatroom: chatroom });
+//   } catch (err) {
+//     console.error('Error fetching chatroom details:', err);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+
+app.get('/chat/detail/:id', async (req, res) => {
+  try {
+    const chatroom = await db.collection('chatroom').findOne({ _id: new ObjectId(req.params.id) });
+
+    if (!chatroom) {
+      return res.status(404).send('Chatroom not found.');
+    }
+
+    // Fetch usernames based on member IDs
+    const members = await db.collection('user').find({ _id: { $in: chatroom.member } }).toArray();
+
+    // Map user IDs to usernames
+    const memberUsernames = members.map(member => member.username);
+
+    res.render('chatDetail.ejs', { chatroom: chatroom, memberUsernames: memberUsernames });
+  } catch (err) {
+    console.error('Error fetching chatroom details:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});

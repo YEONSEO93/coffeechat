@@ -23,6 +23,8 @@
                     </p>
                     <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
                     </p>
+                         <a href="/chat/request?writerId=<%= result.user %>">Chat</a>
+
         </div>
 
         <h3>Comments</h3>
