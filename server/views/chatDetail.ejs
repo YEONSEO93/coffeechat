@@ -14,6 +14,7 @@
 
         <h4>Chatroom for Post: <%= chatroom.postTitle %>
         </h4>
+
         <div class="chatroom-details">
             <p>Members:</p>
             <ul>
@@ -27,7 +28,7 @@
 
         <!-- Placeholder for chat messages -->
         <div id="chat-messages">
-            <!-- Messages would be rendered here -->
+            <!-- Messages will be rendered here -->
         </div>
 
         <!-- Form to send new messages -->
@@ -44,11 +45,13 @@
             socket.emit('ask-join', '<%= chatroom._id %>');
 
             // Listen for new messages
-            socket.on('newMessage', (message) => {
+            socket.on('newMessage', (data) => {
                 const chatMessages = document.getElementById('chat-messages');
-                const newMessage = document.createElement('p');
-                newMessage.textContent = message;
-                chatMessages.appendChild(newMessage);
+                if (chatMessages) {
+                    const newMessage = document.createElement('div');
+                    newMessage.textContent = `${data.username} (${new Date(data.timestamp).toLocaleString()}): ${data.msg}`;
+                    chatMessages.appendChild(newMessage);
+                }
             });
 
             // Handle message form submission
@@ -57,7 +60,8 @@
                 const chatroomId = document.getElementById('chatroomId').value;
                 const message = document.getElementById('message').value;
 
-                socket.emit('message', { msg: message, room: chatroomId });
+                // Emit the message-send event to match the server's expectation
+                socket.emit('message-send', { msg: message, room: chatroomId });
 
                 // Clear the message input
                 document.getElementById('message').value = '';

@@ -13,6 +13,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
+const cookieParser = require('cookie-parser');
 
 // Configure multer for file upload handling
 const upload = multer({ dest: 'uploads/' });
@@ -473,20 +474,54 @@ app.get('/chat/detail/:id', async (req, res) => {
   }
 });
 
-// WebSocket connection for chat functionality
+
+
+
+
+
 io.on('connection', (socket) => {
   console.log('WebSocket connected');
 
+  // Handle joining a room
   socket.on('ask-join', (room) => {
     socket.join(room);
     console.log(`User joined room: ${room}`);
   });
 
-  socket.on('message', (data) => {
-    io.to(data.room).emit('newMessage', data.msg);
-    console.log(`Message sent to room ${data.room}: ${data.msg}`);
+  // Handle sending a message
+  socket.on('message-send', async (data) => {
+    try {
+      const user = socket.request.user; // Now you can directly access user data
+      const timestamp = new Date();
+
+      if (!user) {
+        console.error('User not found.');
+        return;
+      }
+
+      // Save the message to the database
+      await db.collection('chatMessage').insertOne({
+        parentRoom: new ObjectId(data.room),   // Room ID
+        content: data.msg,                     // The message content
+        who: new ObjectId(user._id),           // The user ID who sent the message
+        username: user.username,               // The username of the sender
+        timestamp: timestamp                   // The time when the message was sent
+      });
+
+      // Broadcast the message to others in the room
+      io.to(data.room).emit('newMessage', {
+        msg: data.msg,
+        username: user.username,               // Send the username to the client
+        timestamp: timestamp                   // Send the timestamp to the client
+      });
+
+    } catch (err) {
+      console.error('Error handling message-send event:', err);
+    }
   });
 });
+
+
 
 
 
@@ -590,3 +625,24 @@ app.get('/chat/request', ensureAuthenticated, async (req, res) => {
   }
 });
 
+
+const passportSocketIo = require('passport.socketio');
+
+// Set up session middleware for Socket.IO
+io.use(passportSocketIo.authorize({
+  cookieParser: require('cookie-parser'), // the same cookie parser middleware
+  key: 'connect.sid', // the cookie key (default is 'connect.sid')
+  secret: 'your_secret_key', // the session secret as used in the express-session middleware
+  store: MongoStore.create({ mongoUrl: process.env.DB_URL, dbName: 'coffeechat_ys' }), // session store as used in the express-session middleware
+  success: (data, accept) => {
+    console.log('Successful connection to socket.io');
+    accept(null, true);
+  },
+  fail: (data, message, error, accept) => {
+    if (error) {
+      accept(new Error(message));
+    }
+    console.log('Failed connection to socket.io:', message);
+    accept(null, false);
+  }
+}));
