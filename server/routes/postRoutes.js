@@ -6,7 +6,6 @@ const { createPost, getPosts, getPostById, editPost, deletePost } = require('../
 const { upload } = require('../middleware/fileUpload');
 const { ObjectId } = require('mongodb');
 
-// router.get('/write', ensureAuthenticated, (req, res) => res.render('write'));
 
 router.get('/write', ensureAuthenticated, (req, res) => {
     console.log('User in /write route:', req.user);

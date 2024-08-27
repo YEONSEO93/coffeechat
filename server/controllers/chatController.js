@@ -1,5 +1,4 @@
 //server/controllers/chatController.js
-// server/controllers/chatController.js
 
 const { getDB } = require('../config/db');
 const { ObjectId } = require('mongodb');

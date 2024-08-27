@@ -12,9 +12,9 @@
     <%- include('nav.ejs') %>
 
         <div class="detail-bg">
-            <h4>
+            <h1>
                 <%= result.title %>
-            </h4>
+            </h1>
             <% if (result.imageUrl) { %>
                 <% if (result.imageUrl.endsWith('.gif')) { %>
                     <img src="<%= result.imageUrl %>" alt="Post GIF" width="300" />
@@ -27,7 +27,7 @@
                                 </p>
                                 <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
                                 </p>
-                                <a href="/chat/request?postId=<%= result._id %>">Chat</a>
+                                <a href="/chat/request?postId=<%= result._id %>" class="chat-link">Chat 💬</a>
         </div>
 
         <h3>Comments</h3>
@@ -43,10 +43,10 @@
                     <% if (comment.writerId.toString()===user._id.toString()) { %>
                         <form action="/comment/edit/<%= comment._id %>" method="POST" style="display:inline;">
                             <input type="text" name="content" value="<%= comment.content %>">
-                            <button type="submit">Edit</button>
+                            <button type="submit" class="update-btn">Edit</button>
                         </form>
                         <form action="/comment/delete/<%= comment._id %>" method="POST" style="display:inline;">
-                            <button type="submit">Delete</button>
+                            <button type="submit" class="btn delete-btn">Delete</button>
                         </form>
                         <% } %>
                 </div>
@@ -58,10 +58,10 @@
                             <form action="/comment/add" method="POST">
                                 <input type="hidden" name="postId" value="<%= result._id %>">
                                 <textarea name="content" placeholder="Write a comment..." required></textarea><br>
-                                <button type="submit">Submit Comment</button>
+                                <button type="submit" class="update-btn">Wite Comment</button>
                             </form>
 
-                            <a href="/posts/list">Back to List</a>
+                            <a href="/posts/list"> ⬅ </a>
 </body>
 
 </html>

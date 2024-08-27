@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="/main.css">
+</head>
+
+<body>
+    <nav class="nav">
+        <a class="logo" href="/">Coffee Chat ☕️</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/posts/list">Posts</a>
+            <!-- Hardcoded user welcome message and logout button, since it's static -->
+            <span class="welcome">Welcome, [Username]</span>
+            <a href="/logout" class="logout-btn">Logout</a>
+            <!-- Comment out or remove the sign up/login links if user is logged in -->
+            <!-- <a href="/login" class="login-btn">Login</a> -->
+            <!-- <a href="/register" class="signup-btn">Sign Up</a> -->
+        </div>
+    </nav>
+
+    <main>
+        <section class="welcome-section">
+            <h3>Your place to connect and share your thoughts.</h3>
+        </section>
+
+        <section class="user-info">
+            <h1>Welcome 👋 [Username]</h1>
+        </section>
+
+        <section class="user-posts">
+            <h2>Your Posts</h2>
+            <div class="posts-grid">
+                <!-- Example of hardcoded posts, since dynamic content is not supported -->
+                <div class="post-card">
+                    <h3 class="post-title">Post Title 1</h3>
+                    <p class="post-content">This is the content of the first post.</p>
+                    <img src="/path/to/image.jpg" alt="Post Image" class="post-image">
+                    <p class="post-date">Posted on: 2024-08-27 12:00 PM</p>
+                </div>
+                <div class="post-card">
+                    <h3 class="post-title">Post Title 2</h3>
+                    <p class="post-content">This is the content of the second post.</p>
+                    <img src="/path/to/image2.jpg" alt="Post Image" class="post-image">
+                    <p class="post-date">Posted on: 2024-08-26 08:45 AM</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
