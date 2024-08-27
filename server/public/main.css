@@ -109,26 +109,29 @@ main {
     padding: 20px;
     margin-bottom: 10px;
 }
-.posts-grid {
+.posts-grid{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     padding: 20px;
     margin-bottom: 20px;
+    
 }
 
 /* Post card styling */
 .post-card {
-    background-color: #f3f1f1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
     padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f3f1f1;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
     justify-content: space-between;
 }
 
