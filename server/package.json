@@ -29,6 +29,7 @@
     "concat-map": "^0.0.1",
     "concat-stream": "^1.6.2",
     "connect-flash": "^0.1.1",
+    "connect-mongo": "^5.1.0",
     "content-disposition": "^0.5.4",
     "content-type": "^1.0.5",
     "cookie": "^0.6.0",

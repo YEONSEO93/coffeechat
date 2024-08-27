@@ -1,0 +1,23 @@
+# Node modules
+node_modules
+
+# Logs
+*.log
+
+# Temporary files
+temp
+tmp
+
+# Git directory
+.git
+
+# Environment files
+.env
+
+# Dockerfile and .dockerignore themselves
+Dockerfile
+.dockerignore
+
+# OS-specific files
+.DS_Store
+Thumbs.db

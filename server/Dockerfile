@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# Use the official Node.js 20 image as the base image
+FROM node:20
 
 WORKDIR /usr/src/app
 
@@ -8,8 +9,6 @@ RUN npm install --production
 
 COPY . .
 
-ENV PORT=8080
-
 EXPOSE 8080
 
-CMD [ "npm", "start" ]
+CMD ["node", "server.js"]

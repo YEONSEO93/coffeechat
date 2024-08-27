@@ -192,17 +192,6 @@ button[type="submit"]:hover {
     /* Ensure the image fits within the rounded corners */
 }
 
-.post-image {
-    width: 100%;
-    /* Make the image take up the full width of the card */
-    height: auto;
-    /* Maintain the aspect ratio */
-    display: block;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    transition: transform var(--transition-speed) ease;
-}
-
 .post-content {
     padding: 15px 20px;
     /* Add padding to the text content */
@@ -446,4 +435,47 @@ p {
     /* Semi-bold for emphasis without being too heavy */
     color: var(--accent-color);
     /* Use your accent color for a more distinct look */
+}
+
+.form-container {
+    max-width: 800px;
+    /* Adjust as needed */
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.gif-preview {
+    max-width: 100%;
+    width: 100%;
+    /* Ensure it scales with the container */
+    height: auto;
+    display: block;
+    margin: 20px auto;
+    /* Add some spacing */
+    border: 1px solid #ccc;
+    /* Optional: Add a border for better visibility */
+    border-radius: 8px;
+    /* Optional: Rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Optional: Add a subtle shadow */
+}
+
+#gifCanvas {
+    max-width: 100%;
+    height: auto;
+    display: none;
+    /* Already hidden, but reinforce */
+}
+
+.gif-preview {
+    max-width: 500px;
+    /* Limits the width to 500px */
+    width: 100%;
+    /* Allows the image to scale down if needed */
+    height: auto;
+    display: block;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

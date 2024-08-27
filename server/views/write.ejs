@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Write a Post</title>
     <link rel="stylesheet" href="/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
     <script src="/js/main.js"></script>
-
 </head>
 
 <body>
@@ -16,8 +16,8 @@
         <div class="form-container">
             <h1>Write a Post</h1>
             <form id="postForm" action="/posts/add" method="POST" enctype="multipart/form-data">
-                <input type="text" name="title" placeholder="Title" required>
-                <textarea name="content" placeholder="Content" required></textarea>
+                <input type="text" id="postTitle" name="title" placeholder="Title" required>
+                <textarea id="postContent" name="content" placeholder="Content" required></textarea>
 
                 <div class="file-upload-container" id="fileUploadContainer">
                     <input type="file" id="fileInput" name="img1" accept="image/*">
@@ -27,11 +27,146 @@
                     </div>
                 </div>
 
+                <div class="gif-creation-container">
+                    <h3>Create a GIF</h3>
+                    <textarea id="gifText" placeholder="Enter your text here..."></textarea>
+                    <button type="button" id="createGifBtn" class="btn">Create GIF</button>
+                    <canvas id="gifCanvas" style="display:none;"></canvas>
+                    <img id="gifPreview" class="gif-preview" style="display:none;" />
+                    <div id="progressContainer" style="display:none;">
+                        <p>Processing: <span id="progressPercentage">0%</span></p>
+                        <progress id="progressBar" value="0" max="100"></progress>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn">Submit</button>
             </form>
         </div>
 
-        <script src="/main.js"></script>
+        <script>
+            document.getElementById('createGifBtn').addEventListener('click', function () {
+                const gifText = document.getElementById('gifText').value;
+                const gifCanvas = document.getElementById('gifCanvas');
+                const gifPreview = document.getElementById('gifPreview');
+                const fileInput = document.getElementById('fileInput');
+                const progressContainer = document.getElementById('progressContainer');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const progressBar = document.getElementById('progressBar');
+
+                if (!fileInput.files.length) {
+                    alert('Please upload an image first.');
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = function () {
+                    gifCanvas.width = img.width;
+                    gifCanvas.height = img.height;
+
+                    const gif = new GIF({
+                        workers: 2,
+                        quality: 20,
+                        workerScript: '/js/gif.worker.js',
+                        width: img.width,
+                        height: img.height
+                    });
+
+                    // Display the progress bar
+                    progressContainer.style.display = 'block';
+
+                    const ctx = gifCanvas.getContext('2d');
+
+                    // Set the font size dynamically and ensure it fits within the canvas
+                    let fontSize = Math.min(gifCanvas.width / 8, 80) * 2; // Adjust the font size
+                    ctx.font = `bold ${fontSize}px Arial`;
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const textX = gifCanvas.width / 2;
+                    const textY = gifCanvas.height / 2;
+
+                    // Check if text width exceeds canvas width and reduce font size if necessary
+                    let textWidth = ctx.measureText(gifText).width;
+                    while (textWidth > gifCanvas.width - 20) { // 20 is padding
+                        fontSize -= 5;
+                        ctx.font = `bold ${fontSize}px Arial`;
+                        textWidth = ctx.measureText(gifText).width;
+                    }
+
+                    // Create multiple frames with animated text
+                    for (let i = 0; i <= gifText.length; i++) {
+                        ctx.clearRect(0, 0, gifCanvas.width, gifCanvas.height); // Clear the canvas before drawing
+                        ctx.drawImage(img, 0, 0);
+
+                        // Add text shadow for better visibility
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                        ctx.shadowOffsetX = 5;
+                        ctx.shadowOffsetY = 5;
+                        ctx.shadowBlur = 10;
+
+                        // Draw the text with a typing effect
+                        ctx.fillText(gifText.substring(0, i), textX, textY);
+
+                        gif.addFrame(gifCanvas, { copy: true, delay: 150 }); // Adjust delay for typing speed
+                    }
+
+                    // Update progress bar as the GIF is being processed
+                    gif.on('progress', function (percentage) {
+                        const progress = Math.round(percentage * 100);
+                        progressPercentage.textContent = `${progress}%`;
+                        progressBar.value = progress;
+                    });
+
+                    gif.on('finished', function (blob) {
+                        const url = URL.createObjectURL(blob);
+                        gifPreview.src = url;
+                        gifPreview.style.display = 'block';
+                        gifPreview.onload = function () {
+                            URL.revokeObjectURL(url);
+                        };
+
+                        console.log('GIF created successfully.');
+
+                        // Prepare form data to submit
+                        const formData = new FormData();
+                        formData.append('img1', blob, 'created.gif');
+                        formData.append('title', document.getElementById('postTitle').value);
+                        formData.append('content', document.getElementById('postContent').value);
+
+                        document.getElementById('postForm').onsubmit = function (e) {
+                            e.preventDefault();
+                            submitPost(formData);
+                        };
+
+                        // Hide the progress bar when done
+                        progressContainer.style.display = 'none';
+                    });
+
+                    gif.render();
+                };
+
+                img.src = URL.createObjectURL(fileInput.files[0]);
+            });
+
+            function submitPost(formData) {
+                fetch('/posts/add', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Post submitted successfully.');
+                            window.location.href = '/posts/list';
+                        } else {
+                            console.error('Error submitting post:', response.statusText);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        </script>
 </body>
 
 </html>

@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Post</title>
     <link rel="stylesheet" href="/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
     <script src="/js/main.js"></script>
-
 </head>
 
 <body>
@@ -15,8 +15,11 @@
 
         <div class="form-container">
             <h1>Edit Post</h1>
-            <form action="/posts/edit/<%= result._id %>" method="POST" enctype="multipart/form-data">
-                <label for="title">Title:</label>
+<form id="postForm" action="/posts/edit/<%= result._id %>" method="POST" enctype="multipart/form-data">
+                
+<!-- <form id="postForm" method="POST" enctype="multipart/form-data"> -->
+
+    <label for="title">Title:</label>
                 <input type="text" id="title" name="title" value="<%= result.title %>" required><br><br>
 
                 <label for="content">Content:</label>
@@ -26,21 +29,210 @@
                     <input type="file" id="fileInput" name="img1" accept="image/*">
                     <div class="file-drag-area" id="fileDragArea">
                         <p>Drag & Drop your image here or click to select</p>
-                        <img id="filePreview" src="" alt="Image Preview" style="display:none;">
+                        <img id="filePreview" src="<%= result.imageUrl %>" alt="Image Preview" style="display:none;">
                     </div>
                 </div>
+
                 <% if (result.imageUrl) { %>
-                    <p>Current Image:</p>
-                    <img src="<%= result.imageUrl %>" alt="Current Post Image" width="300"><br><br>
+                    <p>Current Image/GIF:</p>
+                    <img src="<%= result.imageUrl %>" id="currentImage" alt="Current Post Image" width="300"><br><br>
                     <% } %>
+
+                        <!-- GIF recreation section -->
+                        <div class="gif-creation-container">
+                            <h3>Edit/Create a GIF</h3>
+                            <textarea id="gifText" placeholder="Enter your text here..."></textarea>
+                            <button type="button" id="createGifBtn" class="btn">Create GIF</button>
+                            <canvas id="gifCanvas" style="display:none;"></canvas>
+                            <img id="gifPreview" class="gif-preview" style="display:none;" />
+                            <div id="progressContainer" style="display:none;">
+                                <p>Processing: <span id="progressPercentage">0%</span></p>
+                                <progress id="progressBar" value="0" max="100"></progress>
+                            </div>
+                        </div>
 
                         <button type="submit">Update</button>
             </form>
 
-            <!-- Add the Back to List link here -->
             <a href="/posts/list">Back to List</a>
         </div>
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const postId = "<%- result._id %>";
+                const fileInput = document.getElementById('fileInput');
+                const fileDragArea = document.getElementById('fileDragArea');
+                const filePreview = document.getElementById('filePreview');
+                const currentImage = document.getElementById('currentImage');
+                const createGifBtn = document.getElementById('createGifBtn');
+                const gifCanvas = document.getElementById('gifCanvas');
+                const gifPreview = document.getElementById('gifPreview');
+                const gifText = document.getElementById('gifText');
+                const progressContainer = document.getElementById('progressContainer');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const progressBar = document.getElementById('progressBar');
+                const postForm = document.getElementById('postForm');
+                    postForm.action = `/posts/edit/${postId}`;
+
+
+                let gifBlob = null;
+
+                // Handle drag and drop events
+                fileDragArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileDragArea.classList.add('dragover');
+                });
+
+                fileDragArea.addEventListener('dragleave', () => {
+                    fileDragArea.classList.remove('dragover');
+                });
+
+                fileDragArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileDragArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    handleFiles(files);
+                });
+
+                fileDragArea.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', () => {
+                    const files = fileInput.files;
+                    handleFiles(files);
+                });
+
+                function handleFiles(files) {
+                    if (files.length > 0) {
+                        const file = files[0];
+                        if (file.type.startsWith('image/') || file.type === 'image/gif') {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                filePreview.src = e.target.result;
+                                filePreview.style.display = 'block';
+                                if (currentImage) {
+                                    currentImage.style.display = 'none'; // Hide the old image
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                }
+
+                createGifBtn.addEventListener('click', function () {
+                    const gifTextValue = gifText.value;
+
+                    if (!fileInput.files.length) {
+                        alert('Please upload an image first.');
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.onload = function () {
+                        gifCanvas.width = img.width;
+                        gifCanvas.height = img.height;
+
+                        const gif = new GIF({
+                            workers: 2,
+                            quality: 15,
+                            workerScript: '/js/gif.worker.js',
+                            width: img.width,
+                            height: img.height
+                        });
+
+                        progressContainer.style.display = 'block';
+
+                        const ctx = gifCanvas.getContext('2d');
+
+                        let fontSize = Math.min(gifCanvas.width / 8, 80) * 2;
+                        ctx.font = `bold ${fontSize}px Arial`;
+                        ctx.fillStyle = 'white';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const textX = gifCanvas.width / 2;
+                        const textY = gifCanvas.height / 2;
+
+                        let textWidth = ctx.measureText(gifTextValue).width;
+                        while (textWidth > gifCanvas.width - 20) {
+                            fontSize -= 5;
+                            ctx.font = `bold ${fontSize}px Arial`;
+                            textWidth = ctx.measureText(gifTextValue).width;
+                        }
+
+                        for (let i = 0; i <= gifTextValue.length; i += 5) {
+                            ctx.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+                            ctx.drawImage(img, 0, 0);
+
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                            ctx.shadowOffsetX = 5;
+                            ctx.shadowOffsetY = 5;
+                            ctx.shadowBlur = 10;
+
+                            ctx.fillText(gifTextValue.substring(0, i), textX, textY);
+
+                            gif.addFrame(gifCanvas, { copy: true, delay: 150 });
+                        }
+
+                        gif.on('progress', function (percentage) {
+                            const progress = Math.round(percentage * 100);
+                            progressPercentage.textContent = `${progress}%`;
+                            progressBar.value = progress;
+                        });
+
+                        gif.on('finished', function (blob) {
+                            gifBlob = blob;
+                            const url = URL.createObjectURL(blob);
+                            gifPreview.src = url;
+                            gifPreview.style.display = 'block';
+                            gifPreview.onload = function () {
+                                URL.revokeObjectURL(url);
+                            };
+                            console.log('GIF created successfully.');
+
+                            if (currentImage) {
+                                currentImage.style.display = 'none';
+                            }
+                            filePreview.style.display = 'none';
+                            gifPreview.style.display = 'block';
+
+                            progressContainer.style.display = 'none';
+                        });
+
+                        gif.render();
+                    };
+
+                    img.src = URL.createObjectURL(fileInput.files[0]);
+                });
+
+                postForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(postForm);
+
+                    if (gifBlob) {
+                        formData.set('img1', gifBlob, 'created.gif');
+                    }
+
+                    fetch(`/posts/edit/${postId}`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                console.log('Post updated successfully.');
+                                window.location.href = '/posts/list';
+                            } else {
+                                console.error('Error updating post:', response.statusText);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                });
+            });
+        </script>
 </body>
 
 </html>

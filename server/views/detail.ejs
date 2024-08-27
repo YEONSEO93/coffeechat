@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post Detail</title>
-<link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/main.css">
 </head>
 
 <body>
@@ -14,17 +14,20 @@
         <div class="detail-bg">
             <h4>
                 <%= result.title %>
-                    <a href="/posts/detail/<%= result._id %>">View Post</a>
             </h4>
             <% if (result.imageUrl) { %>
-                <img src="<%= result.imageUrl %>" alt="Post Image" width="300">
-                <% } %>
-                    <p>
-                        <%= result.content %>
-                    </p>
-                    <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
-                    </p>
-                    <a href="/chat/request?postId=<%= result._id %>">Chat</a>
+                <% if (result.imageUrl.endsWith('.gif')) { %>
+                    <img src="<%= result.imageUrl %>" alt="Post GIF" width="300" />
+                    <% } else { %>
+                        <img src="<%= result.imageUrl %>" alt="Post Image" width="300" />
+                        <% } %>
+                            <% } %>
+                                <p>
+                                    <%= result.content %>
+                                </p>
+                                <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
+                                </p>
+                                <a href="/chat/request?postId=<%= result._id %>">Chat</a>
         </div>
 
         <h3>Comments</h3>
@@ -58,7 +61,7 @@
                                 <button type="submit">Submit Comment</button>
                             </form>
 
-                    <a href="/posts/list">Back to List</a>
+                            <a href="/posts/list">Back to List</a>
 </body>
 
 </html>

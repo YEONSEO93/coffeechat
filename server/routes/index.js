@@ -12,7 +12,6 @@ const commentRoutes = require('./commentRoutes');
 router.use(authRoutes);
 router.use('/chat', chatRoutes);
 router.use('/posts', postRoutes);
-router.use('/streams', streamRoutes);
 router.use(commentRoutes);
 
 module.exports = router;

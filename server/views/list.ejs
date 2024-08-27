@@ -13,7 +13,6 @@
 
         <div class="container">
             <h1>List of Posts</h1>
-            <!-- Add the Write button right under the heading -->
             <div class="write-button">
                 <a href="/posts/write" class="btn">✍🏻 Write a New Post</a>
             </div>
@@ -28,24 +27,29 @@
                                 </h4>
                             </a>
                             <% if (post.imageUrl) { %>
-                                <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image">
-                                <% } %>
-                                    <p class="post-content">
-                                        <%= post.content %>
-                                    </p>
-                                    <p class="post-meta">
-                                        Posted by: <%= post.username %> on <%= new Date(post.createdAt).toLocaleString()
-                                                %>
-                                    </p>
-                                    <p class="post-meta">Comments: <%= post.commentCount %>
-                                    </p>
-                                    <% if (user && user._id.toString()===post.user.toString()) { %>
-                                        <div class="post-actions">
-                                            <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✎ Edit</a>
-                                            <button class="delete btn delete-btn" data-id="<%= post._id %>">Ⅹ
-                                                Delete</button>
-                                        </div>
+                                <% if (post.imageUrl.endsWith('.gif')) { %>
+                                    <img src="<%= post.imageUrl %>" alt="Post GIF" class="post-image" />
+                                    <% } else { %>
+                                        <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image" />
                                         <% } %>
+                                            <% } %>
+                                                <p class="post-content">
+                                                    <%= post.content %>
+                                                </p>
+                                                <p class="post-meta">
+                                                    Posted by: <%= post.username %> on <%= new
+                                                            Date(post.createdAt).toLocaleString() %>
+                                                </p>
+                                                <p class="post-meta">Comments: <%= post.commentCount %>
+                                                </p>
+                                                <% if (user && user._id.toString()===post.user.toString()) { %>
+                                                    <div class="post-actions">
+                                                        <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✎
+                                                            Edit</a>
+                                                        <button class="delete btn delete-btn"
+                                                            data-id="<%= post._id %>">Ⅹ Delete</button>
+                                                    </div>
+                                                    <% } %>
                         </div>
                         <% }) %>
                 </div>
