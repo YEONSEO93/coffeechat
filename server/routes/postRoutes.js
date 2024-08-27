@@ -6,7 +6,15 @@ const { createPost, getPosts, getPostById, editPost, deletePost } = require('../
 const { upload } = require('../middleware/fileUpload');
 const { ObjectId } = require('mongodb');
 
-router.get('/write', ensureAuthenticated, (req, res) => res.render('write'));
+// router.get('/write', ensureAuthenticated, (req, res) => res.render('write'));
+
+router.get('/write', ensureAuthenticated, (req, res) => {
+    console.log('User in /write route:', req.user);
+    console.log('res.locals before render:', res.locals);
+    res.render('write');
+});
+
+
 
 router.post('/add', ensureAuthenticated, upload.single('img1'), (req, res) => {
     console.log('Post request received');  

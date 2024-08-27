@@ -1,14 +1,14 @@
-<nav class="nav">
-    <a class="logo" href="/">Coffee Chat ☕️</a>
-    <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/posts/list">Posts</a>
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/posts/list">Posts</a></li>
         <% if (user) { %>
-            <span class="welcome">Welcome, <%= user.username %></span>
-            <a href="/logout" class="logout-btn">Logout</a>
+            <li>Welcome, <%= user.username %>
+            </li>
+            <li><a href="/auth/logout" class="logout-btn">Logout</a></li>
             <% } else { %>
-                <a href="/login" class="login-btn">Login</a>
-                <a href="/register" class="signup-btn">Sign Up</a>
+                <li><a href="/auth/login" class="login-btn">Login</a></li>
+                <li><a href="/auth/register" class="signup-btn">Sign Up</a></li>
                 <% } %>
-    </div>
+    </ul>
 </nav>

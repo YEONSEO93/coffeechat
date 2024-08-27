@@ -18,6 +18,7 @@ const app = express();
 
 
 
+
 const corsOptions = {
     origin: ['http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -54,17 +55,20 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
+      console.log('res.locals after viewGlobals:', res.locals);
+
   next();
 });
 
 app.use(sessionMiddleware);
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(viewGlobals);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(passport.initialize());
-app.use(passport.session());
 
 const server = http.createServer(app);
 configureSocketIO(server);
