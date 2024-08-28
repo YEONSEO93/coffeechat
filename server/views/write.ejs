@@ -34,7 +34,7 @@
                     <canvas id="gifCanvas" style="display:none;"></canvas>
                     <img id="gifPreview" class="gif-preview" style="display:none;" />
                     <div id="progressContainer" style="display:none;">
-                        <p>Processing: <span id="progressPercentage">0%</span></p>
+                        <p>Processing: <span id="progressPercentage">0%</span> | <span id="downloadSize">0 KB</span></p>
                         <progress id="progressBar" value="0" max="100"></progress>
                     </div>
                 </div>
@@ -52,6 +52,7 @@
                 const progressContainer = document.getElementById('progressContainer');
                 const progressPercentage = document.getElementById('progressPercentage');
                 const progressBar = document.getElementById('progressBar');
+                const downloadSize = document.getElementById('downloadSize');
 
                 if (!fileInput.files.length) {
                     alert('Please upload an image first.');
@@ -105,7 +106,6 @@
                         ctx.shadowOffsetY = 5;
                         ctx.shadowBlur = 10;
 
-                        // Draw the text with a typing effect
                         ctx.fillText(gifText.substring(0, i), textX, textY);
 
                         gif.addFrame(gifCanvas, { copy: true, delay: 150 }); // Adjust delay for typing speed

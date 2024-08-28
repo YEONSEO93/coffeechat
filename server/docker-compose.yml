@@ -1,8 +1,10 @@
-version: "3"
+version: "3.8"
+
 services:
   app:
     image: 901444280953.dkr.ecr.ap-southeast-2.amazonaws.com/n11725605/yeonseoko:latest
     ports:
       - "8080:8080"
     environment:
-      - DB_URL=mongodb+srv://admin:YGTTagFKZG5NxsJ3@cluster0.zxfdzx0.mongodb.net/coffeechat_ys?retryWrites=true&w=majority
+      - DB_URL=${DB_URL}
+    restart: unless-stopped

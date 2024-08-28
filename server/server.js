@@ -107,3 +107,110 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+
+const fs = require('fs');
+const { createCanvas } = require('canvas');
+const GIFEncoder = require('gif-encoder-2');
+
+
+// Route for custom CPU-intensive task
+app.get('/create-intensive-gif', (req, res) => {
+    const text = "Test CPU Load"; // Sample text for the GIF
+
+    // Create a simple canvas image in memory
+    const width = 300;
+    const height = 300;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Fill the background with a color
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(0, 0, width, height);
+
+    // Load the text onto the canvas
+    ctx.font = 'bold 30px Arial';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, width / 2, height / 2);
+
+    // Simulate a custom CPU-intensive task by applying complex transformations
+    const encoder = new GIFEncoder(width, height);
+    encoder.start();
+    encoder.setRepeat(0);   // 0 for repeat, -1 for no-repeat
+    encoder.setDelay(500);  // frame delay in ms
+    encoder.setQuality(10); // image quality. 10 is default.
+
+    for (let i = 0; i < 50; i++) { // Repeat multiple times to increase CPU load
+        // Custom transformation: Rotate and apply a color filter
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((Math.PI / 25) * i); // Rotate the image slightly on each frame
+        ctx.translate(-width / 2, -height / 2);
+
+        // Apply a custom color filter (invert colors as an example)
+        const imageData = ctx.getImageData(0, 0, width, height);
+        for (let j = 0; j < imageData.data.length; j += 4) {
+            imageData.data[j] = 255 - imageData.data[j];     // Red
+            imageData.data[j + 1] = 255 - imageData.data[j + 1]; // Green
+            imageData.data[j + 2] = 255 - imageData.data[j + 2]; // Blue
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        encoder.addFrame(ctx);
+        ctx.restore(); // Restore the original canvas state
+    }
+
+    encoder.finish();
+
+    // Simulate processing the GIF data without saving it
+    const gifBuffer = encoder.out.getData();
+    console.log('GIF buffer size:', gifBuffer.length);
+
+    res.send(`CPU-intensive processing completed. GIF buffer size: ${gifBuffer.length} bytes`);
+});
+
+
+
+// Load test script
+const numRequests = 1000; // Adjust the number to increase or decrease the load
+const concurrency = 50;   // Number of concurrent requests at a time
+const duration = 5 * 60 * 1000; // 5 minutes duration in milliseconds
+
+function sendRequest() {
+    return new Promise((resolve, reject) => {
+        const req = http.get(`http://localhost:${PORT}/create-intensive-gif`, (res) => {
+            res.on('data', () => {});
+            res.on('end', () => resolve());
+        });
+
+        req.on('error', reject);
+    });
+}
+
+async function startLoadTest() {
+    console.log('Starting load test...');
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < duration) {
+        const promises = [];
+        for (let i = 0; i < concurrency; i++) {
+            promises.push(sendRequest());
+        }
+
+        await Promise.all(promises);
+    }
+
+    console.log('Load test completed.');
+}
+
+//http://localhost:8080/create-intensive-gif

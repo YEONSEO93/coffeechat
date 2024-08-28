@@ -1,4 +1,3 @@
-# Use the official Node.js 20 image as the base image
 FROM node:20
 
 WORKDIR /usr/src/app

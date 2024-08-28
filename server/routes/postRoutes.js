@@ -8,8 +8,7 @@ const { ObjectId } = require('mongodb');
 
 
 router.get('/write', ensureAuthenticated, (req, res) => {
-    console.log('User in /write route:', req.user);
-    console.log('res.locals before render:', res.locals);
+
     res.render('write');
 });
 

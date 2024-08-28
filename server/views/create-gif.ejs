@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Intensive GIF</title>
+    <link rel="stylesheet" href="/main.css">
+</head>
+
+<body>
+    <%- include('nav.ejs') %>
+
+        <div class="form-container">
+            <h1>Create an Intensive GIF</h1>
+            <form id="intensiveGifForm" method="POST" action="/create-intensive-gif" enctype="multipart/form-data">
+                <label for="text">Enter text for GIF:</label>
+                <input type="text" id="text" name="text" placeholder="Enter your text here" required>
+            
+                <label for="image">Upload an image:</label>
+                <input type="file" id="image" name="image" accept="image/*" required>
+            
+                <button type="submit" class="btn">Create Intensive GIF</button>
+            </form>
+
+
+
+            <div id="gifResult"></div>
+        </div>
+
+        <script>
+            document.getElementById('intensiveGifForm').onsubmit = function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                fetch('/create-intensive-gif', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'created.gif';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+
+                        // Optionally display the GIF on the page
+                        const img = document.createElement('img');
+                        img.src = url;
+                        document.getElementById('gifResult').appendChild(img);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            };
+        </script>
+</body>
+
+</html>

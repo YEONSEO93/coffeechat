@@ -327,48 +327,77 @@ textarea {
     opacity: 0.6;
 }
 
-/* Progress Bar Container */
+/* Progress Container */
 #progressContainer {
     margin-top: 20px;
     text-align: center;
-    color: var(--text-color);
+    color: var(--border-color);
+    font-size: 1.1rem;
 }
 
 /* Progress Percentage Text */
 #progressContainer p {
     margin-bottom: 10px;
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--grey-text-color);
+    animation: pulse 1s infinite;
 }
 
 /* Progress Bar */
 #progressBar {
     width: 100%;
-    height: 20px;
-    border-radius: 10px;
-    background-color: var(--border-color);
+    height: 25px;
+    border-radius: 12px;
+    background-color: var(--accent-color);
     overflow: hidden;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     appearance: none;
+    position: relative;
 }
 
 /* Inner Progress Styling */
 #progressBar::-webkit-progress-bar {
-    background-color: var(--border-color);
+    background-color: var(--primary-color);
 }
 
 #progressBar::-webkit-progress-value {
-    background-color: var(--primary-color);
-    border-radius: 10px 0 0 10px;
+    background-color: var(--border-color);
+    border-radius: 12px 0 0 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transition: width 0.3s ease;
 }
 
 #progressBar::-moz-progress-bar {
-    background-color: var(--primary-color);
-    border-radius: 10px 0 0 10px;
+    background-color: var(--border-color);
+    border-radius: 12px 0 0 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transition: width 0.3s ease;
+}
+
+/* Pulse Animation for Percentage Text */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Progress Bar Label */
+#progressBarLabel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--text-color);
 }
 
 /* Image Preview Styles */
