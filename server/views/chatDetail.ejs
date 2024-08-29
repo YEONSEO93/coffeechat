@@ -54,7 +54,7 @@
                 const chatroomId = document.getElementById('chatroomId').value;
                 const message = document.getElementById('message').value;
 
-                socket.emit('message-send', { msg: message, room: chatroomId });
+                socket.emit('message-send', { msg: message, room: chatroomId, username: '<%= user.username %>' });
                 document.getElementById('message').value = '';
             });
         </script>

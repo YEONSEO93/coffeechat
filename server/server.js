@@ -16,9 +16,6 @@ const { getDB } = require('./config/db');
 const app = express();
 
 
-
-
-
 const corsOptions = {
     origin: ['http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -55,7 +52,6 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
-      console.log('res.locals after viewGlobals:', res.locals);
 
   next();
 });
@@ -107,13 +103,6 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
-
-
-
-
-
-
 
 
 

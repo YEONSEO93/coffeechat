@@ -3,7 +3,7 @@ const passportSocketIo = require('passport.socketio');
 const cookieParser = require('cookie-parser');
 const MongoStore = require('connect-mongo');
 const { getDB } = require('../config/db');
-const { ObjectId } = require('mongodb');  // Make sure ObjectId is available
+const { ObjectId } = require('mongodb');
 
 function configureSocketIO(server) {
   const io = new Server(server);
@@ -11,7 +11,7 @@ function configureSocketIO(server) {
   io.use(passportSocketIo.authorize({
     cookieParser: cookieParser,
     key: 'connect.sid',
-    secret: 'your_secret_key',
+    secret: process.env.SESSION_SECRET,
     store: MongoStore.create({ mongoUrl: process.env.DB_URL, dbName: 'coffeechat_ys' }),
     success: (data, accept) => {
       console.log('Successful connection to socket.io');
@@ -53,11 +53,13 @@ function configureSocketIO(server) {
           timestamp: timestamp
         });
 
-        io.to(data.room).emit('newMessage', {
+        const messageData = {
+          username: user.username || 'Anonymous', 
           msg: data.msg,
-          username: user.username,
           timestamp: timestamp
-        });
+        };
+
+        io.to(data.room).emit('newMessage', messageData);
 
       } catch (err) {
         console.error('Error handling message-send event:', err);

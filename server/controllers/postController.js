@@ -18,7 +18,9 @@ const createPost = async (req, res) => {
 
     res.redirect('/posts/list');
   } catch (err) {
+    console.error('Failed to create post:', err);
     res.status(500).send('Failed to create post');
+    
   }
 };
 
@@ -98,6 +100,7 @@ const editPost = async (req, res) => {
             res.status(403).send('Unauthorized to edit this post');
         }
     } catch (err) {
+        console.error('Failed to update post:', err);
         res.status(500).send('Failed to update post');
     }
 };
