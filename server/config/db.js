@@ -1,7 +1,6 @@
-
-
 const { MongoClient } = require('mongodb');
 const uri = process.env.DB_URL;
+
 let db;
 
 const connectDB = async () => {

@@ -7,7 +7,7 @@
     <title>Write a Post</title>
     <link rel="stylesheet" href="/main.css">
     <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
-    <script src="/js/main.js"></script>
+    <script src="/js/main.js" defer></script>
 </head>
 
 <body>
@@ -39,133 +39,74 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn">Submit</button>
+                <button type="submit" class="btn">Submit Post</button>
             </form>
         </div>
 
         <script>
-            document.getElementById('createGifBtn').addEventListener('click', function () {
-                const gifText = document.getElementById('gifText').value;
+            // JavaScript for handling file input, drag-and-drop, and GIF creation
+            document.addEventListener('DOMContentLoaded', () => {
+                const fileInput = document.getElementById('fileInput');
+                const fileDragArea = document.getElementById('fileDragArea');
+                const filePreview = document.getElementById('filePreview');
+                const gifText = document.getElementById('gifText');
+                const createGifBtn = document.getElementById('createGifBtn');
                 const gifCanvas = document.getElementById('gifCanvas');
                 const gifPreview = document.getElementById('gifPreview');
-                const fileInput = document.getElementById('fileInput');
                 const progressContainer = document.getElementById('progressContainer');
-                const progressPercentage = document.getElementById('progressPercentage');
                 const progressBar = document.getElementById('progressBar');
+                const progressPercentage = document.getElementById('progressPercentage');
                 const downloadSize = document.getElementById('downloadSize');
 
-                if (!fileInput.files.length) {
-                    alert('Please upload an image first.');
-                    return;
+                fileInput.addEventListener('change', handleFileSelect);
+                fileDragArea.addEventListener('dragover', handleDragOver);
+                fileDragArea.addEventListener('drop', handleFileDrop);
+
+                function handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        filePreview.src = URL.createObjectURL(file);
+                        filePreview.style.display = 'block';
+                    }
                 }
 
-                const img = new Image();
-                img.onload = function () {
-                    gifCanvas.width = img.width;
-                    gifCanvas.height = img.height;
+                function handleDragOver(event) {
+                    event.preventDefault();
+                    fileDragArea.classList.add('drag-over');
+                }
 
+                function handleFileDrop(event) {
+                    event.preventDefault();
+                    fileDragArea.classList.remove('drag-over');
+                    const file = event.dataTransfer.files[0];
+                    if (file) {
+                        filePreview.src = URL.createObjectURL(file);
+                        filePreview.style.display = 'block';
+                    }
+                }
+
+                createGifBtn.addEventListener('click', () => {
                     const gif = new GIF({
                         workers: 2,
-                        quality: 20,
-                        workerScript: '/js/gif.worker.js',
-                        width: img.width,
-                        height: img.height
+                        quality: 10,
+                        width: 400,
+                        height: 300
                     });
 
-                    // Display the progress bar
-                    progressContainer.style.display = 'block';
-
-                    const ctx = gifCanvas.getContext('2d');
-
-                    // Set the font size dynamically and ensure it fits within the canvas
-                    let fontSize = Math.min(gifCanvas.width / 8, 80) * 2; // Adjust the font size
-                    ctx.font = `bold ${fontSize}px Arial`;
-                    ctx.fillStyle = 'white';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    const textX = gifCanvas.width / 2;
-                    const textY = gifCanvas.height / 2;
-
-                    // Check if text width exceeds canvas width and reduce font size if necessary
-                    let textWidth = ctx.measureText(gifText).width;
-                    while (textWidth > gifCanvas.width - 20) { // 20 is padding
-                        fontSize -= 5;
-                        ctx.font = `bold ${fontSize}px Arial`;
-                        textWidth = ctx.measureText(gifText).width;
-                    }
-
-                    // Create multiple frames with animated text
-                    for (let i = 0; i <= gifText.length; i++) {
-                        ctx.clearRect(0, 0, gifCanvas.width, gifCanvas.height); // Clear the canvas before drawing
-                        ctx.drawImage(img, 0, 0);
-
-                        // Add text shadow for better visibility
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-                        ctx.shadowOffsetX = 5;
-                        ctx.shadowOffsetY = 5;
-                        ctx.shadowBlur = 10;
-
-                        ctx.fillText(gifText.substring(0, i), textX, textY);
-
-                        gif.addFrame(gifCanvas, { copy: true, delay: 150 }); // Adjust delay for typing speed
-                    }
-
-                    // Update progress bar as the GIF is being processed
-                    gif.on('progress', function (percentage) {
-                        const progress = Math.round(percentage * 100);
-                        progressPercentage.textContent = `${progress}%`;
-                        progressBar.value = progress;
+                    gif.addFrame(gifCanvas, { delay: 500, copy: true });
+                    gif.on('progress', (progress) => {
+                        progressBar.value = progress * 100;
+                        progressPercentage.textContent = `${Math.round(progress * 100)}%`;
                     });
 
-                    gif.on('finished', function (blob) {
-                        const url = URL.createObjectURL(blob);
-                        gifPreview.src = url;
+                    gif.on('finished', (blob) => {
+                        gifPreview.src = URL.createObjectURL(blob);
                         gifPreview.style.display = 'block';
-                        gifPreview.onload = function () {
-                            URL.revokeObjectURL(url);
-                        };
-
-                        console.log('GIF created successfully.');
-
-                        // Prepare form data to submit
-                        const formData = new FormData();
-                        formData.append('img1', blob, 'created.gif');
-                        formData.append('title', document.getElementById('postTitle').value);
-                        formData.append('content', document.getElementById('postContent').value);
-
-                        document.getElementById('postForm').onsubmit = function (e) {
-                            e.preventDefault();
-                            submitPost(formData);
-                        };
-
-                        // Hide the progress bar when done
-                        progressContainer.style.display = 'none';
                     });
 
                     gif.render();
-                };
-
-                img.src = URL.createObjectURL(fileInput.files[0]);
+                });
             });
-
-            function submitPost(formData) {
-                fetch('/posts/add', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('Post submitted successfully.');
-                            window.location.href = '/posts/list';
-                        } else {
-                            console.error('Error submitting post:', response.statusText);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            }
         </script>
 </body>
 

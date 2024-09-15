@@ -41,11 +41,15 @@
                                                 </p>
                                                 <p class="post-meta">💌Comments: <%= post.commentCount %>
                                                 </p>
-                                                <% if (user && user._id.toString()===post.user.toString()) { %>
+
+                                                <!-- Check if user and post.user exist before comparing -->
+                                                <% if (user && post.user && user._id && post.user.toString &&
+                                                    user._id.toString()===post.user.toString()) { %>
                                                     <div class="post-actions">
-                                                        <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✏️ Edit</a>
+                                                        <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✏️
+                                                            Edit</a>
                                                         <button class="delete btn delete-btn"
-                                                            data-id="<%= post._id %>">Ⅹ Delete</button>
+                                                            data-id="<%= post._id %>">❌ Delete</button>
                                                     </div>
                                                     <% } %>
                         </div>
