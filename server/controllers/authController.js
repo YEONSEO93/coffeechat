@@ -1,169 +1,6 @@
-// // server/controllers/authController.js
-
-// const bcrypt = require('bcrypt');
-// const { getDB } = require('../config/db');
-// const passport = require('passport');
-
-// // Render the registration page
-// const showRegisterPage = (req, res) => {
-//     res.render('register');
-// };
-
-// // Handle user registration
-// const registerUser = async (req, res) => {
-//     try {
-//         const hashedPassword = await bcrypt.hash(req.body.password, 10);
-//         const db = getDB();
-//         await db.collection('user').insertOne({
-//             username: req.body.username,
-//             password: hashedPassword,
-//         });
-//         req.flash('success_msg', 'You are now registered and can log in!');
-//         res.redirect('/login');
-//     } catch (err) {
-//         req.flash('error_msg', 'Error registering new user');
-//         res.status(500).send('Error registering new user');
-//     }
-// };
-
-// // Render the login page
-// const showLoginPage = (req, res) => {
-//     res.render('login');
-// };
-
-// // Handle user login
-// const loginUser = (req, res, next) => {
-//     passport.authenticate('local', (err, user, info) => {
-//         if (err) {
-//             req.flash('error_msg', 'An error occurred during authentication.');
-//             return next(err);
-//         }
-//         if (!user) {
-//             req.flash('error_msg', 'Invalid username or password.');
-//             return res.redirect('/login');
-//         }
-//         req.logIn(user, (err) => {
-//             if (err) {
-//                 req.flash('error_msg', 'An error occurred during login.');
-//                 return next(err);
-//             }
-//             req.flash('success_msg', 'You are now logged in!');
-//             return res.redirect('/');
-//         });
-//     })(req, res, next);
-// };
-
-// // Handle user logout
-// const logoutUser = (req, res) => {
-//     req.logout((err) => {
-//         if (err) {
-//             req.flash('error_msg', 'An error occurred during logout.');
-//             return next(err);
-//         }
-//         req.flash('success_msg', 'You are logged out');
-//         res.redirect('/');
-//     });
-// };
-
-// module.exports = {
-//     showRegisterPage,
-//     registerUser,
-//     showLoginPage,
-//     loginUser,
-//     logoutUser
-// };
-
-
-
-
-
-// server/controllers/authController.js
-
-// // server/controllers/authController.js
-
-// const bcrypt = require('bcrypt');
-// const { getDB } = require('../config/db');
-// const passport = require('passport');
-
-// // Render the registration page
-// const showRegisterPage = (req, res) => {
-//     res.render('register');
-// };
-
-// // Handle user registration
-// const registerUser = async (req, res) => {
-//     try {
-//         const hashedPassword = await bcrypt.hash(req.body.password, 10);
-//         const db = getDB();
-//         await db.collection('user').insertOne({
-//             username: req.body.username,
-//             password: hashedPassword,
-//         });
-//         req.flash('success_msg', 'You are now registered and can log in!');
-//         res.redirect('/login');
-//     } catch (err) {
-//         req.flash('error_msg', 'Error registering new user');
-//         res.status(500).send('Error registering new user');
-//     }
-// };
-
-// // Render the login page
-// const showLoginPage = (req, res) => {
-//     res.render('login');
-// };
-
-// // Handle user login
-// const loginUser = (req, res, next) => {
-//     passport.authenticate('local', (err, user, info) => {
-//         if (err) {
-//             req.flash('error_msg', 'An error occurred during authentication.');
-//             return next(err);
-//         }
-//         if (!user) {
-//             req.flash('error_msg', 'Invalid username or password.');
-//             return res.redirect('/login');
-//         }
-//         req.logIn(user, (err) => {
-//             if (err) {
-//                 req.flash('error_msg', 'An error occurred during login.');
-//                 return next(err);
-//             }
-//             req.flash('success_msg', 'You are now logged in!');
-//             return res.redirect('/');
-//         });
-//     })(req, res, next);
-// };
-
-// // Handle user logout
-// const logoutUser = (req, res) => {
-//     req.logout((err) => {
-//         if (err) {
-//             req.flash('error_msg', 'An error occurred during logout.');
-//             return next(err);
-//         }
-//         req.flash('success_msg', 'You are logged out');
-//         res.redirect('/');
-//     });
-// };
-
-// module.exports = {
-//     showRegisterPage,
-//     registerUser,
-//     showLoginPage,
-//     loginUser,
-//     logoutUser
-// };
-
-
-
-
-// server/controllers/authController.js
-
 const AWS = require('aws-sdk');
 const cognito = new AWS.CognitoIdentityServiceProvider();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const User = require('../models/User'); // Assuming you have a User model for custom JWT-based authentication
 
 // Render the registration page
 const showRegisterPage = (req, res) => {
@@ -251,43 +88,13 @@ const loginUserCognito = async (req, res) => {
             res.redirect('/posts/list');
         });
     } catch (err) {
+        // Handle PasswordResetRequiredException
+        if (err.code === 'PasswordResetRequiredException') {
+            req.flash('error_msg', 'Password reset required. Please reset your password.');
+            return res.redirect(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+        }
         console.error('Login failed:', err.message);
         req.flash('error_msg', err.message || 'Login failed');
-        res.redirect('/auth/login');
-    }
-};
-
-// Custom JWT-Based Login
-const loginUserJWT = async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user) {
-            req.flash('error_msg', 'Invalid credentials');
-            return res.redirect('/auth/login');
-        }
-
-        const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
-        if (!isPasswordValid) {
-            req.flash('error_msg', 'Invalid credentials');
-            return res.redirect('/auth/login');
-        }
-
-        // Sign the JWT token
-        const token = jwt.sign(
-            { _id: user._id, username: user.username },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h', algorithm: 'HS256' }
-        );
-        console.log('Generated JWT:', token);
-
-        // Store token in session
-        req.session.token = token;
-
-        // Redirect to the posts list
-        res.redirect('/posts/list');
-    } catch (err) {
-        console.error('Error during login:', err);
-        req.flash('error_msg', 'Login failed');
         res.redirect('/auth/login');
     }
 };
@@ -296,10 +103,8 @@ const loginUserJWT = async (req, res) => {
 const ensureAuthenticated = (req, res, next) => {
     const token = req.session.token;
     if (token) {
-        console.log('Token before verification:', token);
         jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
             if (err) {
-                console.log('Token verification failed or expired:', err.message);
                 req.flash('error_msg', 'Session expired, please log in again');
                 return res.redirect('/auth/login');
             }
@@ -307,7 +112,6 @@ const ensureAuthenticated = (req, res, next) => {
             next();
         });
     } else {
-        console.log('No token found, redirecting to login.');
         req.flash('error_msg', 'Please log in to view that resource');
         res.redirect('/auth/login');
     }
@@ -319,7 +123,6 @@ module.exports = {
     logoutUser,
     registerUser,
     confirmUser,
-    loginUserCognito,  // Cognito-based login
-    loginUserJWT,      // Custom JWT-based login
+    loginUserCognito,
     ensureAuthenticated
 };

@@ -1,130 +1,76 @@
-// server/routes/authRoutes.js
-
-// const express = require('express');
-// const router = express.Router();
-// const authController = require('../controllers/authController');
-
-// // Register page route
-// router.get('/register', authController.showRegisterPage);
-
-// // Handle user registration
-// router.post('/register', authController.registerUser);
-
-// // Login page route
-// router.get('/login', authController.showLoginPage);
-
-// // Handle user login
-// router.post('/login', authController.loginUser);
-
-// // Logout route
-// router.get('/logout', authController.logoutUser);
-
-// module.exports = router;
-
-
-
-
-
-
-
 const express = require('express');
 const AWS = require('aws-sdk');
+const { CognitoIdentityProviderClient, ForgotPasswordCommand, ConfirmForgotPasswordCommand } = require('@aws-sdk/client-cognito-identity-provider');
 const router = express.Router();
-const cognito = new AWS.CognitoIdentityServiceProvider();
 const authController = require('../controllers/authController');
 
-// Render Registration Page
-router.get('/register', authController.showRegisterPage);
+// AWS Cognito Setup
+const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION });
 
-// Handle User Registration
-router.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
+// Routes for registration, login, and logout
+router.get('/register', authController.showRegisterPage);
+router.post('/register', authController.registerUser);
+router.get('/login', authController.showLoginPage);
+router.post('/login', authController.loginUserCognito);
+router.get('/logout', authController.logoutUser);
+
+// Reset Password Routes
+router.get('/forgot-password', (req, res) => {
+    res.render('requestResetPassword', { error_msg: req.flash('error_msg'), success_msg: req.flash('success_msg') });
+});
+
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    const params = {
+        ClientId: process.env.COGNITO_CLIENT_ID,
+        Username: email
+    };
+
+    try {
+        const command = new ForgotPasswordCommand(params);
+        await cognitoClient.send(command);
+
+        req.flash('success_msg', 'A password reset code has been sent to your email.');
+        res.redirect(`/auth/reset-password?email=${encodeURIComponent(email)}`); // Redirect to reset form
+    } catch (err) {
+        console.error('Error sending reset code:', err);
+        req.flash('error_msg', err.message || 'Error sending reset code');
+        res.redirect('/auth/forgot-password');
+    }
+});
+
+// Render Reset Password Page
+router.get('/reset-password', (req, res) => {
+    const { email } = req.query;
+    if (!email) {
+        req.flash('error_msg', 'No email provided for password reset');
+        return res.redirect('/auth/forgot-password');
+    }
+    res.render('resetPassword', { email, error_msg: req.flash('error_msg'), success_msg: req.flash('success_msg') });
+});
+
+// Handle Password Reset Submission
+router.post('/confirm-reset-password', async (req, res) => {
+    const { email, verificationCode, newPassword } = req.body;
 
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
         Username: email,
-        Password: password,
-        UserAttributes: [{ Name: 'email', Value: email }]
+        ConfirmationCode: verificationCode,
+        Password: newPassword
     };
 
     try {
-        await cognito.signUp(params).promise();
-        req.session.tempPassword = password;
-        res.render('confirm', { username: email });
-    } catch (err) {
-        console.error('Error registering:', err);
-        req.flash('error_msg', err.message || 'Error registering');
-        res.status(400).redirect('/auth/register');
-    }
-});
+        const command = new ConfirmForgotPasswordCommand(params);
+        await cognitoClient.send(command);
 
-// Handle Confirmation Code Submission
-router.post('/confirm', async (req, res) => {
-    const { username, code } = req.body;
-    const password = req.session.tempPassword;
-
-    const confirmParams = {
-        ClientId: process.env.COGNITO_CLIENT_ID,
-        ConfirmationCode: code,
-        Username: username
-    };
-
-    try {
-        await cognito.confirmSignUp(confirmParams).promise();
-        const loginParams = {
-            AuthFlow: 'USER_PASSWORD_AUTH',
-            ClientId: process.env.COGNITO_CLIENT_ID,
-            AuthParameters: {
-                USERNAME: username,
-                PASSWORD: password
-            }
-        };
-        const authData = await cognito.initiateAuth(loginParams).promise();
-        req.session.token = authData.AuthenticationResult.AccessToken;
-        delete req.session.tempPassword;
-        res.redirect('/');
-    } catch (err) {
-        console.error('Error confirming email:', err);
-        req.flash('error_msg', err.message || 'Error confirming email');
-        res.status(400).redirect('/auth/confirm');
-    }
-});
-
-// Render Login Page
-router.get('/login', authController.showLoginPage);
-
-// Handle User Login
-router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    const params = {
-        AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: process.env.COGNITO_CLIENT_ID,
-        AuthParameters: {
-            USERNAME: email,
-            PASSWORD: password
-        }
-    };
-
-    try {
-        const data = await cognito.initiateAuth(params).promise();
-        req.session.token = data.AuthenticationResult.AccessToken;
-        req.session.save((err) => {
-            if (err) {
-                console.error('Error saving session:', err);
-                req.flash('error_msg', 'Session save failed');
-                return res.redirect('/auth/login');
-            }
-            res.redirect('/posts/list');
-        });
-    } catch (err) {
-        console.error('Login failed:', err);
-        req.flash('error_msg', 'Login failed: ' + (err.message || 'Unknown error'));
+        req.flash('success_msg', 'Password reset successfully! You can now log in.');
         res.redirect('/auth/login');
+    } catch (err) {
+        console.error('Error resetting password:', err);
+        req.flash('error_msg', err.message || 'Error resetting password');
+        res.redirect(`/auth/reset-password?email=${encodeURIComponent(email)}`);
     }
 });
-
-// Handle User Logout
-router.get('/logout', authController.logoutUser);
 
 module.exports = router;

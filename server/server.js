@@ -230,7 +230,6 @@ const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/db');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-const mongoose = require('mongoose');
 const flash = require('connect-flash');
 const passport = require('./config/passport');
 const cors = require('cors');
@@ -240,15 +239,15 @@ const ensureAuthenticated = require('./middleware/auth');
 
 const app = express();
 
+// MongoDB connection
+connectDB().then(() => {
+    console.log("Connected to the database successfully");
+}).catch(err => {
+    console.error("Failed to connect to the database:", err);
+    process.exit(1);
+});
 
-mongoose.connect(process.env.DB_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
-
-// AWS Setup
+// AWS SDK Setup
 const AWS = require('aws-sdk');
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -256,25 +255,15 @@ AWS.config.update({
     sessionToken: process.env.AWS_SESSION_TOKEN,
     region: process.env.AWS_REGION
 });
-const s3 = new AWS.S3();
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
 // CORS Setup
-const corsOptions = {
+app.use(cors({
     origin: ['http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204
-};
-app.use(cors(corsOptions));
-
-// Database Connection
-connectDB().then(() => {
-    console.log("Connected to the database successfully");
-}).catch(err => {
-    console.error("Failed to connect to the database:", err);
-    process.exit(1);
-});
+}));
 
 // Middleware Setup
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -291,17 +280,10 @@ app.use(session({
     store: MongoStore.create({
         mongoUrl: process.env.DB_URL
     }),
-    //  cookie: {
-    //     maxAge: 60 * 60 * 1000, // 1 hour
-    //     secure: false, // Only set this to true in production (if using HTTPS)
-    //     httpOnly: true,
-    //     sameSite: 'lax'
-    // }
-        cookie: { maxAge: 3600000 } // 1 hour
-
+    cookie: { maxAge: 3600000 } // 1 hour
 }));
 
-// Flash Messages
+// Flash Messages Setup
 app.use(flash());
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
@@ -348,8 +330,6 @@ app.get('/test-session', (req, res) => {
     console.log('Session data:', req.session);
     res.send(req.session); // Return session data to check if token exists
 });
-
-
 
 // Disable ETag
 app.disable('etag');
