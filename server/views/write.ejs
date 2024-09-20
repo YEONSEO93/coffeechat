@@ -44,29 +44,31 @@
         </div>
 
         <script>
-            // JavaScript for handling file input, drag-and-drop, and GIF creation
             document.addEventListener('DOMContentLoaded', () => {
                 const fileInput = document.getElementById('fileInput');
                 const fileDragArea = document.getElementById('fileDragArea');
                 const filePreview = document.getElementById('filePreview');
-                const gifText = document.getElementById('gifText');
-                const createGifBtn = document.getElementById('createGifBtn');
-                const gifCanvas = document.getElementById('gifCanvas');
-                const gifPreview = document.getElementById('gifPreview');
-                const progressContainer = document.getElementById('progressContainer');
-                const progressBar = document.getElementById('progressBar');
-                const progressPercentage = document.getElementById('progressPercentage');
-                const downloadSize = document.getElementById('downloadSize');
+                const postForm = document.getElementById('postForm');
+
+                let selectedFile = null;
 
                 fileInput.addEventListener('change', handleFileSelect);
                 fileDragArea.addEventListener('dragover', handleDragOver);
                 fileDragArea.addEventListener('drop', handleFileDrop);
 
-                function handleFileSelect(event) {
+                async function handleFileSelect(event) {
                     const file = event.target.files[0];
+                    selectedFile = file;
                     if (file) {
                         filePreview.src = URL.createObjectURL(file);
                         filePreview.style.display = 'block';
+
+                        // Get pre-signed URL from the server
+                        const preSignedUrl = await getPreSignedUrl(file.name);
+                        if (preSignedUrl) {
+                            // Upload the file to S3 using the pre-signed URL
+                            await uploadFileToS3(file, preSignedUrl);
+                        }
                     }
                 }
 
@@ -79,33 +81,51 @@
                     event.preventDefault();
                     fileDragArea.classList.remove('drag-over');
                     const file = event.dataTransfer.files[0];
+                    selectedFile = file;
                     if (file) {
                         filePreview.src = URL.createObjectURL(file);
                         filePreview.style.display = 'block';
+
+                        // Get pre-signed URL from the server and upload the file
+                        getPreSignedUrl(file.name).then(preSignedUrl => {
+                            if (preSignedUrl) {
+                                uploadFileToS3(file, preSignedUrl);
+                            }
+                        });
                     }
                 }
 
-                createGifBtn.addEventListener('click', () => {
-                    const gif = new GIF({
-                        workers: 2,
-                        quality: 10,
-                        width: 400,
-                        height: 300
-                    });
+                // Function to get pre-signed URL from server
+                async function getPreSignedUrl(fileName) {
+                    try {
+                        const response = await fetch(`/posts/presigned-url?fileName=${fileName}`);
+                        const data = await response.json();
+                        return data.url; // Assuming the server returns { url: preSignedUrl }
+                    } catch (error) {
+                        console.error('Error fetching pre-signed URL:', error);
+                    }
+                }
 
-                    gif.addFrame(gifCanvas, { delay: 500, copy: true });
-                    gif.on('progress', (progress) => {
-                        progressBar.value = progress * 100;
-                        progressPercentage.textContent = `${Math.round(progress * 100)}%`;
-                    });
+                // Upload file to S3 using the pre-signed URL
+                const uploadFileToS3 = async (file, preSignedUrl) => {
+                    try {
+                        const response = await fetch(preSignedUrl, {
+                            method: 'PUT',
+                            body: file,
+                            headers: {
+                                'Content-Type': file.type,
+                            },
+                        });
+                        if (response.ok) {
+                            console.log('File uploaded successfully');
+                        } else {
+                            console.error('File upload failed');
+                        }
+                    } catch (error) {
+                        console.error('Error uploading file:', error);
+                    }
+                };
 
-                    gif.on('finished', (blob) => {
-                        gifPreview.src = URL.createObjectURL(blob);
-                        gifPreview.style.display = 'block';
-                    });
-
-                    gif.render();
-                });
             });
         </script>
 </body>

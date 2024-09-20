@@ -236,6 +236,8 @@ const cors = require('cors');
 const { getDB } = require('./config/db');
 const configureSocketIO = require('./config/socketio');
 const ensureAuthenticated = require('./middleware/auth');
+const multer = require('multer'); // Add multer
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 
@@ -247,6 +249,7 @@ connectDB().then(() => {
     process.exit(1);
 });
 
+
 // AWS SDK Setup
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -255,7 +258,42 @@ AWS.config.update({
     sessionToken: process.env.AWS_SESSION_TOKEN,
     region: process.env.AWS_REGION
 });
+
+
+console.log('AWS Access Key ID:', process.env.AWS_ACCESS_KEY_ID);
+console.log('AWS Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY);
+console.log('AWS Session Token:', process.env.AWS_SESSION_TOKEN);
+
+const s3 = new AWS.S3();
+// File upload route
+app.post('/upload', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: req.file.originalname,  // Use original file name or generate a unique key
+        Body: req.file.buffer,       // File content from memory
+        ContentType: req.file.mimetype // Correct file MIME type
+    };
+
+    console.log('Uploading to bucket:', process.env.AWS_BUCKET_NAME);
+    console.log('Uploading file with key:', req.file.originalname);
+
+    try {
+        const data = await s3.upload(params).promise();
+        res.status(200).send(`File uploaded successfully: ${data.Location}`);
+    } catch (err) {
+        console.error('Error uploading file:', err);
+        res.status(500).send('File upload failed');
+    }
+});
+
+
 const cognito = new AWS.CognitoIdentityServiceProvider();
+
+
 
 // CORS Setup
 app.use(cors({
