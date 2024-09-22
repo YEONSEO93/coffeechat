@@ -1,49 +1,7 @@
-
-
-const { getPreSignedUrl, uploadFileToS3, deleteImageFromS3 } = require('./s3Controller.js'); // Correct import for all S3-related functions
+const { getPreSignedUrl, uploadFileToS3, deleteImageFromS3 } = require('./s3Controller.js');
 const { getDB } = require('../config/db');
 const { ObjectId } = require('mongodb');
-
-// Create a new post and store the image in S3
-const createPost = async (req, res) => {
-    try {
-        let imageUrl = null;
-
-        if (req.file) {
-            // Generate a unique file name
-            const fileName = Date.now() + path.extname(req.file.originalname);
-
-            // Get a pre-signed URL for the file
-            const preSignedUrl = await getPreSignedUrl(fileName);
-            if (!preSignedUrl) {
-                throw new Error('Failed to generate pre-signed URL');
-            }
-
-            // Upload the file to S3
-            const fileBuffer = req.file.buffer;
-            const contentType = req.file.mimetype;
-            await uploadFileToS3(fileBuffer, preSignedUrl, contentType); // Upload to S3
-
-            // Set the image URL (where the file will be located)
-            imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-        }
-
-        const newPost = {
-            title: req.body.title,
-            content: req.body.content,
-            imageUrl: imageUrl, // Store S3 URL
-            user: req.user._id,
-            username: req.user.username,
-            createdAt: new Date(),
-        };
-
-        await getDB().collection('post').insertOne(newPost);
-        res.redirect('/posts/list');
-    } catch (err) {
-        console.error('Error creating post:', err);
-        res.status(500).send('Failed to create post');
-    }
-};
+const path = require('path');
 
 // Retrieve all posts with the number of comments for each post
 const getPosts = async (req, res) => {
@@ -72,10 +30,10 @@ const getPosts = async (req, res) => {
             },
         ]).toArray();
         
-         // Generate pre-signed URLs for images if they exist
+        // Generate pre-signed URLs for images if they exist
         for (const post of posts) {
             if (post.imageUrl) {
-                post.preSignedUrl = await getPreSignedReadUrl(post.imageUrl);
+                post.preSignedUrl = await getPreSignedUrl(post.imageUrl);
             }
         }
 
@@ -100,7 +58,7 @@ const getPostById = async (req, res) => {
 
         if (post) {
             if (post.imageUrl) {
-                post.imageUrl = await getPreSignedReadUrl(post.imageUrl); // Generate a pre-signed URL for reading the image
+                post.imageUrl = await getPreSignedUrl(post.imageUrl); // Generate a pre-signed URL for reading the image
             }
             res.render('detail', { result: post, result2: comments, user: req.user });
         } else {
@@ -138,9 +96,7 @@ const editPost = async (req, res) => {
             // Upload the new image to S3
             const fileName = req.file.filename;
             const preSignedUrl = await getPreSignedUrl(fileName);
-            await uploadFileToS3(req.file, preSignedUrl);
-            console.log("Upload result:", uploadResult);
-
+            await uploadFileToS3(req.file.buffer, preSignedUrl); // Ensure to send buffer
 
             // Update the image URL
             updateData.imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
@@ -189,7 +145,6 @@ const deletePost = async (req, res) => {
 };
 
 module.exports = {
-    createPost,
     getPosts,
     getPostById,
     editPost,
