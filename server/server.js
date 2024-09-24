@@ -73,7 +73,7 @@ const cognito = new AWS.CognitoIdentityServiceProvider();
 
 // CORS Setup
 app.use(cors({
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:8080'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204
@@ -94,7 +94,11 @@ app.use(session({
     store: MongoStore.create({
         mongoUrl: process.env.DB_URL
     }),
-    cookie: { maxAge: 3600000 } // 1 hour
+    cookie: {
+        maxAge: 3600000,
+        secure: false,  // Set to true in production with HTTPS
+        sameSite: 'lax' // This allows cross-site cookies, essential in OAuth flows
+    }
 }));
 
 // Flash Messages Setup
@@ -138,6 +142,15 @@ app.get('/', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+
+app.get('/dashboard', (req, res) => {
+    const user = req.session.user;  // Assuming user data is stored in session after login
+    const posts = [ /* fetch posts for the user */ ];
+    
+    res.render('dashboard', { user, posts });
+});
+
 
 // Test Session Route
 app.get('/test-session', (req, res) => {
