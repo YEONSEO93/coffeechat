@@ -11,57 +11,53 @@
 <body>
     <%- include('nav.ejs') %>
 
-        <div class="detail-bg">
-            <h1>
-                <%= result.title %>
-            </h1>
-            <% if (result.imageUrl) { %>
-                <% if (result.imageUrl.endsWith('.gif')) { %>
-                    <img src="<%= result.imageUrl %>" alt="Post GIF" width="300" />
-                    <% } else { %>
-                        <img src="<%= result.imageUrl %>" alt="Post Image" width="300" />
-                        <% } %>
-                            <% } %>
-                                <p>
-                                    <%= result.content %>
-                                </p>
-                                <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %>
-                                </p>
-                                <a href="/chat/request?postId=<%= result._id %>" class="chat-link">Chat 💬</a>
-        </div>
+    <div class="detail-bg">
+        <h1><%= result.title %></h1>
 
-        <h3>Comments</h3>
-        <% if (result2 && result2.length> 0) { %>
-            <% result2.forEach(function(comment) { %>
-                <div class="comment">
-                    <p><strong>
-                            <%= comment.writer %>
-                        </strong>: <%= comment.content %>
-                    </p>
-                    <p><small>Posted on: <%= new Date(comment.createdAt).toLocaleString() %></small></p>
+        <% if (result.imageUrl) { %>
+            <% if (result.imageUrl.endsWith('.gif')) { %>
+                <img src="<%= result.imageUrl %>" alt="Post GIF" width="300" />
+            <% } else { %>
+                <img src="<%= result.imageUrl %>" alt="Post Image" width="300" />
+            <% } %>
+        <% } %>
 
-                    <% if (comment.writerId.toString()===user._id.toString()) { %>
-                        <form action="/comment/edit/<%= comment._id %>" method="POST" style="display:inline;">
-                            <input type="text" name="content" value="<%= comment.content %>">
-                            <button type="submit" class="update-btn">Edit</button>
-                        </form>
-                        <form action="/comment/delete/<%= comment._id %>" method="POST" style="display:inline;">
-                            <button type="submit" class="btn delete-btn">Delete</button>
-                        </form>
-                        <% } %>
-                </div>
-                <% }) %>
-                    <% } else { %>
-                        <p>No comments yet. Be the first to comment!</p>
-                        <% } %>
+        <p><%= result.content %></p>
+        <p>Posted on: <%= new Date(result.createdAt).toLocaleString() %></p>
+        <a href="/chat/request?postId=<%= result._id %>" class="chat-link">Chat 💬</a>
+    </div>
 
-                            <form action="/comment/add" method="POST">
-                                <input type="hidden" name="postId" value="<%= result._id %>">
-                                <textarea name="content" placeholder="Write a comment..." required></textarea><br>
-                                <button type="submit" class="update-btn">Wite Comment</button>
-                            </form>
+    <h3>Comments</h3>
 
-                            <a href="/posts/list"> ⬅ </a>
+    <% if (result2 && result2.length > 0) { %>
+        <% result2.forEach(function(comment) { %>
+            <div class="comment">
+                <p><strong><%= comment.writer %></strong>: <%= comment.content %></p>
+                <p><small>Posted on: <%= new Date(comment.createdAt).toLocaleString() %></small></p>
+
+                <!-- Safely check if writerId and user._id are available -->
+                <% if (comment.writerId && user && user._id && comment.writerId.toString() === user._id.toString()) { %>
+                    <form action="/comment/edit/<%= comment._id %>" method="POST" style="display:inline;">
+                        <input type="text" name="content" value="<%= comment.content %>">
+                        <button type="submit" class="update-btn">Edit</button>
+                    </form>
+                    <form action="/comment/delete/<%= comment._id %>" method="POST" style="display:inline;">
+                        <button type="submit" class="btn delete-btn">Delete</button>
+                    </form>
+                <% } %>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <p>No comments yet. Be the first to comment!</p>
+    <% } %>
+
+    <form action="/comment/add" method="POST">
+        <input type="hidden" name="postId" value="<%= result._id %>">
+        <textarea name="content" placeholder="Write a comment..." required></textarea><br>
+        <button type="submit" class="update-btn">Write Comment</button>
+    </form>
+
+    <a href="/posts/list"> ⬅ Back to Post List</a>
 </body>
 
 </html>

@@ -11,6 +11,7 @@
 <body>
     <h1>Login</h1>
 
+    <!-- Flash messages for error or success -->
     <% if (error_msg) { %>
         <div class="alert alert-danger">
             <%= error_msg %>
@@ -23,6 +24,7 @@
                 </div>
                 <% } %>
 
+                    <!-- Login Form -->
                     <form action="/auth/login" method="POST">
                         <label for="email">Email:</label>
                         <input type="email" id="email" name="email" required><br><br>
@@ -30,12 +32,8 @@
                         <label for="password">Password:</label>
                         <input type="password" id="password" name="password" required><br><br>
 
-                        <button type="submit">Login</button>
+                        <button type="submit" class="login-btn">Login</button>
                     </form>
-
-                    <div>
-                        <a href="/auth/login/google" class="login-btn">Login with Google</a>
-                    </div>
 </body>
 
 </html>

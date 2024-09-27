@@ -27,9 +27,6 @@
                     </div>
                 </div>
 
-                <!-- Hidden input to store the S3 URL after upload -->
-                <input type="hidden" id="uploadedFileUrl" name="uploadedFileUrl">
-
                 <div class="gif-creation-container">
                     <h3>Create a GIF</h3>
                     <textarea id="gifText" placeholder="Enter your text here..."></textarea>
@@ -71,9 +68,6 @@
                         if (preSignedUrl) {
                             // Upload the file to S3 using the pre-signed URL
                             await uploadFileToS3(file, preSignedUrl);
-
-                            // Set uploaded file's S3 URL to hidden input
-                            document.getElementById('uploadedFileUrl').value = `https://${file.name}`;
                         }
                     }
                 }
@@ -96,9 +90,6 @@
                         getPreSignedUrl(file.name).then(preSignedUrl => {
                             if (preSignedUrl) {
                                 uploadFileToS3(file, preSignedUrl);
-
-                                // Set uploaded file's S3 URL to hidden input
-                                document.getElementById('uploadedFileUrl').value = `https://${file.name}`;
                             }
                         });
                     }

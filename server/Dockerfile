@@ -19,6 +19,4 @@ ENV AWS_BUCKET_NAME=$AWS_BUCKET_NAME
 
 EXPOSE 8080
 
-ENV NODE_ENV=production
-
 CMD ["node", "server.js"]

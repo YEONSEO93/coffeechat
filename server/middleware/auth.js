@@ -1,38 +1,3 @@
-// const jwt = require('jsonwebtoken');
-
-// const ensureAuthenticated = (req, res, next) => {
-//     const token = req.session.token;
-
-//     if (token) {
-//         // Decode the token (optional) for debugging or inspection
-//         const decodedToken = jwt.decode(token);
-//         console.log('Decoded Token (before verification):', decodedToken);
-
-//         // Verify the token
-//         jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
-//             if (err) {
-//                 // Token verification failed
-//                 console.log('Token verification failed or expired:', err.message);
-//                 req.flash('error_msg', 'Session expired, please log in again');
-//                 return res.redirect('/auth/login');
-//             }
-
-//             // Token is valid, attach user data to the request and proceed
-//             console.log('Token successfully verified. Decoded user:', decoded);
-//             req.user = decoded;
-//             next();
-//         });
-//     } else {
-//         // No token found, redirect to login
-//         console.log('No token found, redirecting to login.');
-//         req.flash('error_msg', 'Please log in to view that resource');
-//         return res.redirect('/auth/login');
-//     }
-// };
-
-// module.exports = ensureAuthenticated;
-
-
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 
@@ -73,8 +38,5 @@ const ensureAuthenticated = (req, res, next) => {
         res.redirect('/auth/login');
     }
 };
-
-
-
 
 module.exports = ensureAuthenticated;
