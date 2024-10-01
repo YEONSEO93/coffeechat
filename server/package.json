@@ -8,6 +8,7 @@
     "@aws-sdk/client-dynamodb": "^3.656.0",
     "@aws-sdk/client-s3": "^3.658.1",
     "@aws-sdk/client-secrets-manager": "^3.658.1",
+    "@aws-sdk/client-ssm": "^3.658.1",
     "@aws-sdk/credential-provider-sso": "^3.658.1",
     "@aws-sdk/credential-providers": "^3.637.0",
     "@aws-sdk/lib-dynamodb": "^3.656.0",

@@ -18,6 +18,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const AWS = require('aws-sdk');
 const { getSecretValue } = require('./config/secretsManager');
+const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
 
 
 const app = express();
@@ -89,24 +90,37 @@ async function initializeCognito() {
     }
 }
 
-// (async () => {
-//     try {
-//         await initializeAWS();
-//         await initializeCognito();
-//         await connectDB();
-//         console.log("Connected to the database successfully");
 
-//         // Define routes and start server
-//         const PORT = process.env.PORT || 8080;
-//         const server = http.createServer(app);
-//         configureSocketIO(server);
-//         server.listen(PORT, () => {
-//             console.log(`Server running at http://localhost:${PORT}`);
-//         });
-//     } catch (err) {
-//         console.error("Error starting the server:", err);
-//     }
-// })();
+
+
+// Function to get parameter from AWS Parameter Store
+async function getParameterValue() {
+    const secret = await getSecretValue('n11725605-assignment2-latest');  // Fetch credentials from AWS Secrets Manager
+
+    const client = new SSMClient({
+        region: 'ap-southeast-2',
+        credentials: {
+            accessKeyId: secret.accessKeyId,
+            secretAccessKey: secret.secretAccessKey,
+            sessionToken: secret.sessionToken || '',  // Include sessionToken for temporary credentials if available
+        }
+    });
+
+    const parameterName = '/n11725605/assignment2';  // Use your actual parameter name
+
+    try {
+        const response = await client.send(new GetParameterCommand({
+            Name: parameterName
+        }));
+        console.log("Parameter value:", response.Parameter.Value);  // Log the parameter value
+        return response.Parameter.Value;
+    } catch (error) {
+        console.error("Error retrieving parameter:", error);
+        throw error;
+    }
+}
+
+
 
 // S3 Client setup using AWS SDK v3
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -209,6 +223,8 @@ app.get('/test-session', (req, res) => {
     res.send(req.session); // Return session data to check if token exists
 });
 
+
+
 // Test route for AWS Secrets Manager
 // http://localhost:8080/test-secret
 app.get('/test-secret', async (req, res) => {
@@ -219,6 +235,19 @@ app.get('/test-secret', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+
+// Test route for Parameter Store here
+// http://localhost:8080/test-parameter
+app.get('/test-parameter', async (req, res) => {
+    try {
+        const parameterValue = await getParameterValue();
+        res.json({ success: true, parameterValue });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 
 // Disable ETag
 app.disable('etag');
