@@ -34,6 +34,29 @@
 
                         <button type="submit" class="login-btn">Login</button>
                     </form>
+
+                    <hr>
+
+                    <!-- Google Login Button -->
+                    <div>
+                        <button onclick="loginWithGoogle()" class="google-login-btn">Login with Google</button>
+                    </div>
+
+                    <!-- Place the script here -->
+                    <script>
+                        function loginWithGoogle() {
+                            const clientId = '<%= process.env.COGNITO_CLIENT_ID %>';
+                            const redirectUri = 'http://localhost:8080/auth/callback'; // Ensure this matches the callback in Cognito
+                            const cognitoDomain = '<%= process.env.COGNITO_DOMAIN %>';
+                            const state = '<%= state %>';  // Use the state from the backend
+
+                            const googleLoginUrl = `https://${cognitoDomain}/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=CODE&client_id=${clientId}&scope=email+openid+profile&state=${state}`;
+
+                            window.location.href = googleLoginUrl;
+                        }
+                    </script>
+
+
 </body>
 
 </html>
