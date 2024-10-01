@@ -3,10 +3,17 @@ const multer = require('multer');
 const router = express.Router();
 const ensureAuthenticated = require('../middleware/auth');
 const { getDB } = require('../config/db');
-const { getPreSignedUrlWithUser, uploadFileToS3, deleteImageFromS3, getPreSignedReadUrl } = require('../controllers/s3Controller.js'); // Import S3 functions correctly
+const { getPreSignedUrlWithUser, uploadFileToS3, getPreSignedReadUrl } = require('../controllers/s3Controller.js'); // Import S3 functions correctly
 const { upload } = require('../middleware/fileUpload'); // Import multer configuration
 const { ObjectId } = require('mongodb');
 const path = require('path');
+
+// Import the required AWS SDK modules for DynamoDB
+const { createDynamoDBClient } = require('../controllers/dynamoController'); // Import the function correctly
+const { PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { v4: uuidv4 } = require('uuid'); // Import the uuidv4 function
+
+const qutUsername = process.env.QUT_USERNAME; // Fixed partition key
 
 // Route to render the write post page
 router.get('/write', ensureAuthenticated, (req, res) => {
@@ -14,24 +21,26 @@ router.get('/write', ensureAuthenticated, (req, res) => {
 });
 
 // Route to handle adding a new post
-router.post('/add', ensureAuthenticated, upload.single('img1'), async (req, res) => {
+router.post('/add', ensureAuthenticated, multer().single('img1'), async (req, res) => {
   try {
     console.log('Post request received');
-    
+
     // Ensure multer has processed the file
     if (!req.file) {
       return res.status(400).send('No file uploaded');
     }
 
-    // Generate a unique file name
+    // Generate a unique file name and postId
     const userId = req.user.sub || req.user.email; // Cognito로 인증된 유저의 ID 또는 이메일
     const fileName = Date.now() + path.extname(req.file.originalname);
+    const postId = uuidv4(); // Generate postId here using uuidv4
+    console.log('Generated postId:', postId);
     console.log('Generated fileName:', fileName);
 
     // Generate a pre-signed URL for uploading the file to S3
     const preSignedUrl = await getPreSignedUrlWithUser(fileName, userId);
     if (!preSignedUrl) {
-        throw new Error('Failed to generate pre-signed URL');
+      throw new Error('Failed to generate pre-signed URL');
     }
     console.log('Pre-Signed URL:', preSignedUrl);
 
@@ -41,17 +50,35 @@ router.post('/add', ensureAuthenticated, upload.single('img1'), async (req, res)
     console.log('File Buffer:', fileBuffer);
     console.log('Content Type:', contentType);
 
-    await uploadFileToS3(fileBuffer, preSignedUrl, contentType);  // Upload to S3
+    await uploadFileToS3(fileBuffer, preSignedUrl, contentType); // Upload to S3
 
-    // Create post data
+    // Create post data to insert into MongoDB
     const postData = {
       ...req.body,
-      imageUrl: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${userId}/${fileName}`,  // Store S3 URL
+      imageUrl: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${userId}/${fileName}`, // Store S3 URL
       user: req.user._id,
       createdAt: new Date(),
     };
 
     await getDB().collection('post').insertOne(postData);
+
+    // Additionally, store post data in DynamoDB
+    const dynamoPostData = {
+      "qut-username": qutUsername, // Partition key
+      "postId": postId, // Sort key (UUID)
+      title: req.body.title,
+      content: req.body.content,
+      imageUrl: postData.imageUrl, // S3 file URL
+      timestamp: new Date().toISOString(),
+      uploadedBy: userId // Uploading user info
+    };
+
+    const docClient = await createDynamoDBClient();
+    await docClient.send(new PutCommand({
+      TableName: process.env.DYNAMO_TABLE_NAME,
+      Item: dynamoPostData,
+    }));
+
     res.redirect('/posts/list');
   } catch (err) {
     console.error('Failed to add post:', err);
@@ -214,7 +241,7 @@ router.get('/presigned-url', async (req, res) => {
   }
 
   try {
-    const preSignedUrl = await getPreSignedUrl(fileName);
+    const preSignedUrl = await getPreSignedUrlWithUser(fileName);
     res.json({ url: preSignedUrl });
   } catch (error) {
     console.error('Error generating pre-signed URL:', error);
