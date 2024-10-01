@@ -1,6 +1,25 @@
 const AWS = require('aws-sdk');
-const cognito = new AWS.CognitoIdentityServiceProvider();
 const jwt = require('jsonwebtoken');
+const { getSecretValue } = require('../config/secretsManager');
+let cognito = new AWS.CognitoIdentityServiceProvider(); // Change from const to let
+
+
+async function initializeCognito() {
+    const secret = await getSecretValue('n11725605-assignment2-latest');  // Use your secret name
+    AWS.config.update({
+    accessKeyId: secret.accessKeyId,
+    secretAccessKey: secret.secretAccessKey,
+    // Remove sessionToken only if you're using permanent credentials
+    sessionToken: secret.sessionToken || '', // Optional for temp credentials
+    region: 'ap-southeast-2'
+});
+    cognito = new AWS.CognitoIdentityServiceProvider();
+}
+
+initializeCognito().catch(err => {
+    console.error('Error initializing Cognito:', err);
+});
+
 
 // Render the registration page
 const showRegisterPage = (req, res) => {
@@ -118,6 +137,7 @@ const ensureAuthenticated = (req, res, next) => {
 };
 
 module.exports = {
+    initializeCognito,
     showRegisterPage,
     showLoginPage,
     logoutUser,
