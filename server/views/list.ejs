@@ -1,88 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>List of Posts</title>
     <link rel="stylesheet" href="/main.css" />
-</head>
+  </head>
 
-<body>
+  <body>
     <%- include('nav.ejs') %>
 
-        <div class="container" style="padding: 10px; margin-top: 20px">
-            <h1 style="margin-top: 20px">List of Posts</h1>
-            <div class="write-button">
-                <a href="/posts/write" class="btn">✍🏻 Write a New Post</a>
-            </div>
-            <% if (posts && posts.length> 0) { %>
-                <div class="posts-grid">
-                    <% posts.forEach(post=> { %>
-                        <div class="post-card">
-                            <a href="/posts/detail/<%= post._id %>">
-                                <h4 class="post-title">
-                                    <%= post.title %>
-                                </h4>
-                            </a>
-                            <% if (post.imageUrl) { %>
-                                <!-- Display the image using the stored S3 URL -->
-                                <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image" />
-                                <% } %>
-                                    <p class="post-content">
-                                        <%= post.content %>
-                                    </p>
-                                    <p class="post-meta">
-                                        ✍️ Posted by: <%= post.username %> on <%= new
-                                                Date(post.createdAt).toLocaleString() %>
-                                    </p>
-                                    <p class="post-meta">💌 Comments: <%= post.commentCount %>
-                                    </p>
+    <div class="container" style="padding: 10px; margin-top: 20px">
+      <h1 style="margin-top: 20px">List of Posts</h1>
+      <div class="write-button">
+        <a href="/posts/write" class="btn">✍🏻 Write a New Post</a>
+      </div>
+      <% if (posts && posts.length > 0) { %>
+      <div class="posts-grid">
+        <% posts.forEach(post => { %>
+        <div class="post-card">
+          <a href="/posts/detail/<%= post._id %>">
+            <h4 class="post-title"><%= post.title %></h4>
+          </a>
+          <% if (post.imageUrl) { %>
+          <!-- Display the image using the stored S3 URL -->
+          <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image" />
+          <% } %>
+          <p class="post-content"><%= post.content %></p>
+          <p class="post-meta">
+            ✍️ Posted by: <%= post.username %> on <%= new
+            Date(post.createdAt).toLocaleString() %>
+          </p>
+          <p class="post-meta">💌 Comments: <%= post.commentCount %></p>
 
-                                    <% if (user && post.user && user.sub && user.sub.toString()===post.user.toString())
-                                        { %>
-                                        <div class="post-actions">
-                                            <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✏️ Edit</a>
-                                            <button class="delete btn delete-btn" data-id="<%= post._id %>">
-                                                ❌ Delete
-                                            </button>
-                                        </div>
-                                        <% } %>
-                        </div>
-                        <% }) %>
-                </div>
-                <% } else { %>
-                    <div class="no-posts">
-                        <h4>No posts found</h4>
-                    </div>
-                    <% } %>
-                        <a href="/">Go back to Home</a>
+          <% if (user && post.user && user.sub && user.sub.toString() ===
+          post.user.toString()) { %>
+          <div class="post-actions">
+            <a href="/posts/edit/<%= post._id %>" class="btn edit-btn"
+              >✏️ Edit</a
+            >
+            <button class="delete btn delete-btn" data-id="<%= post._id %>">
+              ❌ Delete
+            </button>
+          </div>
+          <% } %>
         </div>
+        <% }) %>
+      </div>
+      <% } else { %>
+      <div class="no-posts">
+        <h4>No posts found</h4>
+      </div>
+      <% } %>
+      <a href="/">Go back to Home</a>
+    </div>
 
-        <script>
-            document.querySelectorAll(".delete").forEach((button) => {
-                button.addEventListener("click", function () {
-                    const postId = this.dataset.id;
-                    const confirmed = confirm(
-                        "Are you sure you want to delete this post?"
-                    );
-                    if (confirmed) {
-                        fetch(`/posts/delete/${postId}`, { method: "DELETE" })
-                            .then((response) => {
-                                if (response.ok) {
-                                    window.location.href = "/posts/list";
-                                } else {
-                                    alert("Failed to delete the post.");
-                                }
-                            })
-                            .catch((err) => {
-                                console.error("Error:", err);
-                                alert("Error deleting the post.");
-                            });
-                    }
-                });
-            });
-        </script>
-</body>
-
+    <script>
+      document.querySelectorAll(".delete").forEach((button) => {
+        button.addEventListener("click", function () {
+          const postId = this.dataset.id;
+          const confirmed = confirm(
+            "Are you sure you want to delete this post?"
+          );
+          if (confirmed) {
+            fetch(`/posts/delete/${postId}`, { method: "DELETE" })
+              .then((response) => {
+                if (response.ok) {
+                  window.location.href = "/posts/list";
+                } else {
+                  alert("Failed to delete the post.");
+                }
+              })
+              .catch((err) => {
+                console.error("Error:", err);
+                alert("Error deleting the post.");
+              });
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
