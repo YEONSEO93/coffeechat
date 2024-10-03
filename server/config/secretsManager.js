@@ -1,8 +1,5 @@
-// server/config/secretsManager.js
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const { fromSSO } = require('@aws-sdk/credential-provider-sso');
-
-// const client = new SecretsManagerClient({ region: "ap-southeast-2" });
 
 // Function to retrieve secret from AWS Secrets Manager
 async function getSecretValue(secretName) {
