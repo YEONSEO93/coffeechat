@@ -1,28 +1,4 @@
 
-
-// const session = require('express-session');
-// const MongoStore = require('connect-mongo');
-
-// module.exports = function ensureAuthenticated(req, res, next) {
-//     console.log('ensureAuthenticated middleware, session data:', req.session); // Log the entire session
-
-//     if (req.session.token) {
-//         return next(); // User is authenticated
-//     }
-
-//     console.log('Redirecting to login because session token is missing');
-//     res.redirect('/auth/login'); // Redirect to login if not authenticated
-// };
-
-
-
-
-
-
-
-
-
-
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const { getParameterValue } = require('./config/secretsManager'); // Import the helper to fetch secrets/parameters
