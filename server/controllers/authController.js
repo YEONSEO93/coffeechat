@@ -124,6 +124,7 @@ const showRegisterPage = (req, res) => {
 const showLoginPage = async (req, res) => {
     try {
         const clientId = await getParameterValue('/n11725605/COGNITO_CLIENT_ID');
+        const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI');
         const cognitoDomain = await getParameterValue('/n11725605/COGNITO_DOMAIN');
         const state = crypto.randomBytes(16).toString('hex'); // Generate a random state token for OAuth login flow
 
@@ -132,8 +133,9 @@ const showLoginPage = async (req, res) => {
             error_msg: req.flash('error_msg'),
             success_msg: req.flash('success_msg'),
             state: state,
-            cognitoDomain: cognitoDomain, // Pass the Cognito domain to the frontend
-            clientId: clientId // Pass the client ID to the frontend
+            redirectUri: redirectUri,
+            cognitoDomain: cognitoDomain,
+            clientId: clientId
         });
     } catch (error) {
         console.error('Error rendering login page:', error);

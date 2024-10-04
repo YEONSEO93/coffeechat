@@ -44,17 +44,19 @@
 
                     <!-- Place the script here -->
                     <script>
-                        function loginWithGoogle() {
-                            const clientId = '<%= clientId %>';  // Fetch the client ID passed from the backend
-                            const redirectUri = 'http://localhost:8080/auth/callback'; // Ensure this matches the callback in Cognito
-                            const cognitoDomain = '<%= cognitoDomain %>';  // Use the domain passed from the backend
-                            const state = '<%= state %>';  // Use the state from the backend
+                        function loginWithGoogle
+                        () {
+                            const clientId = '<%= clientId %>';  // Client ID from the server
+                            const redirectUri = '<%= redirectUri %>';  // Redirect URI from the server
+                            const cognitoDomain = '<%= cognitoDomain %>';  // Cognito domain from the server
+                            const state = '<%= state %>';  // State from the server
 
                             const googleLoginUrl = `https://${cognitoDomain}/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=CODE&client_id=${clientId}&scope=email+openid+profile&state=${state}`;
 
                             window.location.href = googleLoginUrl;
                         }
                     </script>
+
 
 
 </body>
