@@ -186,7 +186,28 @@ router.post('/login', authController.loginUserCognito);
 router.get('/logout', authController.logoutUser);
 router.get('/confirm', authController.showConfirmPage);
 
+// Redirect to Google OAuth2 authorization endpoint
+router.get('/auth/google', async (req, res) => {
+    try {
+        const clientId = await getParameterValue('/n11725605/GOOGLE_CLIENT_ID'); // Fetch your Google Client ID
+        const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI'); // Your redirect URI
 
+        const state = generateRandomState(); // You can generate a unique state string to track the request
+
+        const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=email%20openid%20profile&state=${state}`;
+
+        // Redirect to Google OAuth2 authorization URL
+        res.redirect(googleOAuthUrl);
+    } catch (error) {
+        console.error('Error generating Google OAuth2 URL:', error);
+        res.status(500).send('Internal server error');
+    }
+});
+
+// A helper function to generate a random state string (optional)
+function generateRandomState() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
 // Reset Password Routes
 router.get('/forgot-password', (req, res) => {
