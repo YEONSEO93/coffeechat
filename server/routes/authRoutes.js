@@ -186,23 +186,44 @@ router.post('/login', authController.loginUserCognito);
 router.get('/logout', authController.logoutUser);
 router.get('/confirm', authController.showConfirmPage);
 
-// Redirect to Google OAuth2 authorization endpoint
+// // Redirect to Google OAuth2 authorization endpoint
+// router.get('/auth/google', async (req, res) => {
+//     try {
+//         const clientId = await getParameterValue('/n11725605/GOOGLE_CLIENT_ID'); // Fetch your Google Client ID
+//         const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI'); // Your redirect URI
+
+//         const state = generateRandomState(); // You can generate a unique state string to track the request
+
+//         const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=email%20openid%20profile&state=${state}`;
+
+//         // Redirect to Google OAuth2 authorization URL
+//         res.redirect(googleOAuthUrl);
+//     } catch (error) {
+//         console.error('Error generating Google OAuth2 URL:', error);
+//         res.status(500).send('Internal server error');
+//     }
+// });
+
+
+// Redirect to AWS Cognito with Google as the identity provider
 router.get('/auth/google', async (req, res) => {
     try {
-        const clientId = await getParameterValue('/n11725605/GOOGLE_CLIENT_ID'); // Fetch your Google Client ID
-        const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI'); // Your redirect URI
+        const clientId = await getParameterValue('/n11725605/COGNITO_CLIENT_ID');
+        const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI');
+        const cognitoDomain = await getParameterValue('/n11725605/COGNITO_DOMAIN');
 
-        const state = generateRandomState(); // You can generate a unique state string to track the request
+        const state = generateRandomState();
+        req.session.state = state;
 
-        const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=email%20openid%20profile&state=${state}`;
+        const cognitoLoginUrl = `https://${cognitoDomain}/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=CODE&client_id=${clientId}&scope=email+openid+profile&state=${state}`;
 
-        // Redirect to Google OAuth2 authorization URL
-        res.redirect(googleOAuthUrl);
+        res.redirect(cognitoLoginUrl);
     } catch (error) {
-        console.error('Error generating Google OAuth2 URL:', error);
+        console.error('Error generating Cognito OAuth2 URL:', error);
         res.status(500).send('Internal server error');
     }
 });
+
 
 // A helper function to generate a random state string (optional)
 function generateRandomState() {
@@ -274,15 +295,19 @@ router.post('/confirm-reset-password', async (req, res) => {
 // Handle OAuth2 callback
 router.get('/callback', async (req, res) => {
     const { code, state } = req.query;
-    
-    // Verify the state matches what we stored in the session to prevent CSRF attacks
+
     if (req.session.state !== state) {
         req.flash('error_msg', 'Invalid state parameter. Possible CSRF attack.');
         return res.redirect('/auth/login');
     }
 
     try {
-        // Exchange authorization code for tokens
+        const clientId = await getParameterValue('/n11725605/COGNITO_CLIENT_ID');
+        const clientSecret = await getParameterValue('/n11725605/GOOGLE_CLIENT_SECRET');
+        const redirectUri = await getParameterValue('/n11725605/COGNITO_REDIRECT_URI');
+        const cognitoDomain = await getParameterValue('/n11725605/COGNITO_DOMAIN');
+
+        // Exchange the authorization code for tokens
         const tokenResponse = await axios.post(
             `https://${cognitoDomain}/oauth2/token`,
             querystring.stringify({
@@ -296,15 +321,11 @@ router.get('/callback', async (req, res) => {
         );
 
         const { id_token, access_token } = tokenResponse.data;
-
-        // Verify the JWT token
         const decoded = jwt.decode(id_token);
 
-        // Save the token and user info in the session
         req.session.token = access_token;
         req.session.user = decoded;
 
-        // Redirect to the protected page (e.g., post list)
         res.redirect('/posts/list');
     } catch (error) {
         console.error('Error exchanging authorization code:', error);
@@ -312,6 +333,47 @@ router.get('/callback', async (req, res) => {
         res.redirect('/auth/login');
     }
 });
+
+// router.get('/callback', async (req, res) => {
+//     const { code, state } = req.query;
+    
+//     // Verify the state matches what we stored in the session to prevent CSRF attacks
+//     if (req.session.state !== state) {
+//         req.flash('error_msg', 'Invalid state parameter. Possible CSRF attack.');
+//         return res.redirect('/auth/login');
+//     }
+
+//     try {
+//         // Exchange authorization code for tokens
+//         const tokenResponse = await axios.post(
+//             `https://${cognitoDomain}/oauth2/token`,
+//             querystring.stringify({
+//                 grant_type: 'authorization_code',
+//                 client_id: clientId,
+//                 client_secret: clientSecret,
+//                 redirect_uri: redirectUri,
+//                 code: code
+//             }),
+//             { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+//         );
+
+//         const { id_token, access_token } = tokenResponse.data;
+
+//         // Verify the JWT token
+//         const decoded = jwt.decode(id_token);
+
+//         // Save the token and user info in the session
+//         req.session.token = access_token;
+//         req.session.user = decoded;
+
+//         // Redirect to the protected page (e.g., post list)
+//         res.redirect('/posts/list');
+//     } catch (error) {
+//         console.error('Error exchanging authorization code:', error);
+//         req.flash('error_msg', 'Authentication failed.');
+//         res.redirect('/auth/login');
+//     }
+// });
 
 
 module.exports = router;
