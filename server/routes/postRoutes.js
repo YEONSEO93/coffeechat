@@ -142,6 +142,40 @@ router.get("/list", ensureAuthenticated, async (req, res) => {
   }
 });
 
+
+// Route to get details of a specific post by postId
+router.get("/detail/:postId", ensureAuthenticated, async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    // Validate the ObjectId
+    if (!ObjectId.isValid(postId)) {
+      return res.status(400).send("Invalid post ID");
+    }
+
+    // Fetch the post from MongoDB
+    const post = await getDB()
+      .collection("post")
+      .findOne({ _id: new ObjectId(postId) });
+
+    if (!post) {
+      return res.status(404).send("Post not found");
+    }
+
+    // Fetch the related comments from MongoDB
+    const comments = await getDB()
+      .collection("comment")
+      .find({ parentId: new ObjectId(postId) })
+      .toArray();
+
+    // Render the detail view with the post and comments
+    res.render("detail", { result: post, result2: comments, user: req.user });
+  } catch (err) {
+    console.error("Failed to fetch post details:", err);
+    res.status(500).send("Error fetching post details");
+  }
+});
+
 // Route to render the edit page for a specific post by ID
 router.get("/edit/:id", ensureAuthenticated, async (req, res) => {
   try {
