@@ -17,35 +17,39 @@
       </div>
       <% if (posts && posts.length > 0) { %>
       <div class="posts-grid">
-        <% posts.forEach(post => { %>
-        <div class="post-card">
-          <a href="/posts/detail/<%= post._id %>">
-            <h4 class="post-title"><%= post.title %></h4>
-          </a>
-          <% if (post.imageUrl) { %>
-          <!-- Display the image using the stored S3 URL -->
-          <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image" />
-          <% } %>
-          <p class="post-content"><%= post.content %></p>
-          <p class="post-meta">
-            ✍️ Posted by: <%= post.username %> on <%= new
-            Date(post.createdAt).toLocaleString() %>
-          </p>
-          <p class="post-meta">💌 Comments: <%= post.commentCount %></p>
-
-          <% if (user && post.user && user.sub && user.sub.toString() ===
-          post.user.toString()) { %>
-          <div class="post-actions">
-            <a href="/posts/edit/<%= post._id %>" class="btn edit-btn"
-              >✏️ Edit</a
-            >
-            <button class="delete btn delete-btn" data-id="<%= post._id %>">
-              ❌ Delete
-            </button>
+        <% posts.forEach(post=> { %>
+          <div class="post-card">
+            <a href="/posts/detail/<%= post._id %>">
+              <h4 class="post-title">
+                <%= post.title %>
+              </h4>
+            </a>
+      
+            <% if (post.imageUrl) { %>
+              <% if (post.imageUrl.endsWith('.gif')) { %>
+                <img src="<%= post.imageUrl %>" alt="GIF Thumbnail" class="post-gif-thumbnail" />
+                <% } else { %>
+                  <img src="<%= post.imageUrl %>" alt="Post Image" class="post-image" />
+                  <% } %>
+                    <% } %>
+      
+                      <p class="post-content">
+                        <%= post.content %>
+                      </p>
+                      <p class="post-meta">✍️ Posted by: <%= post.username %> on <%= new Date(post.createdAt).toLocaleString()
+                            %>
+                      </p>
+                      <p class="post-meta">💌 Comments: <%= post.commentCount %>
+                      </p>
+      
+                      <% if (user && post.user && user.sub && user.sub.toString()===post.user.toString()) { %>
+                        <div class="post-actions">
+                          <a href="/posts/edit/<%= post._id %>" class="btn edit-btn">✏️ Edit</a>
+                          <button class="delete btn delete-btn" data-id="<%= post._id %>">❌ Delete</button>
+                        </div>
+                        <% } %>
           </div>
-          <% } %>
-        </div>
-        <% }) %>
+          <% }) %>
       </div>
       <% } else { %>
       <div class="no-posts">

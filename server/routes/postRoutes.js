@@ -95,8 +95,10 @@ router.post(
           Item: dynamoPostData,
         })
       );
-
+      // Send response after all operations are successful
+      // res.status(201).send({ message: 'Post created successfully', postId });
       res.redirect("/posts/list");
+
     } catch (err) {
       console.error("Failed to add post:", err);
       res.status(500).send("An unexpected error occurred.");

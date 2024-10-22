@@ -2,62 +2,56 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatroom Details</title>
-<link rel="stylesheet" href="/main.css">
-    <script src="https://cdn.jsdelivr.net/npm/socket.io@4.7.2/client-dist/socket.io.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Test</title>
+    <link rel="stylesheet" href="/main.css" />
 </head>
 
 <body>
-    <%- include('nav.ejs') %>
+    <h4>Chatroom for Post</h4>
 
-        <h4>Chatroom for Post: <%= chatroom.postTitle %>
-        </h4>
+    <div id="chat-messages"></div>
 
-        <div class="chatroom-details">
-            <p>Members:</p>
-            <ul>
-                <% memberUsernames.forEach(username=> { %>
-                    <li>
-                        <%= username %>
-                    </li>
-                    <% }) %>
-            </ul>
-        </div>
+    <form id="chat-form">
+        <textarea id="message" placeholder="Write a message..." required></textarea>
+        <button type="submit">Send</button>
+    </form>
 
-        <!-- Chat messages placeholder -->
-        <div id="chat-messages"></div>
+    <script>
+        // WebSocket 서버에 연결
+        const ws = new WebSocket("ws://localhost:8080");
 
-        <!-- Message form -->
-        <form id="chat-form">
-            <input type="hidden" id="chatroomId" value="<%= chatroom._id %>">
-            <textarea id="message" placeholder="Write a message..." required></textarea>
-            <button type="submit">Send</button>
-        </form>
+        // WebSocket 연결 열기
+        ws.onopen = () => {
+            console.log("WebSocket connection opened");
+        };
 
-        <script>
-            const socket = io();
-            socket.emit('ask-join', '<%= chatroom._id %>');
+        // 서버로부터 메시지 수신
+        ws.onmessage = (event) => {
+            console.log("Message received from server:", event.data);
 
-            socket.on('newMessage', (data) => {
-                const chatMessages = document.getElementById('chat-messages');
-                if (chatMessages) {
-                    const newMessage = document.createElement('div');
-                    newMessage.textContent = `${data.username} (${new Date(data.timestamp).toLocaleString()}): ${data.msg}`;
-                    chatMessages.appendChild(newMessage);
-                }
-            });
+            const chatMessages = document.getElementById("chat-messages");
+            const newMessage = document.createElement("div");
+            newMessage.textContent = `Server: ${event.data}`;
+            chatMessages.appendChild(newMessage);
+        };
 
-            document.getElementById('chat-form').addEventListener('submit', function (e) {
+        // WebSocket 연결 닫기
+        ws.onclose = () => {
+            console.log("WebSocket connection closed");
+        };
+
+        // 메시지 전송 폼 제출 처리
+        document
+            .getElementById("chat-form")
+            .addEventListener("submit", function (e) {
                 e.preventDefault();
-                const chatroomId = document.getElementById('chatroomId').value;
-                const message = document.getElementById('message').value;
-
-                socket.emit('message-send', { msg: message, room: chatroomId, username: '<%= user.username %>' });
-                document.getElementById('message').value = '';
+                const message = document.getElementById("message").value;
+                ws.send(message); // WebSocket을 통해 메시지 전송
+                console.log("Message sent to server:", message);
             });
-        </script>
+    </script>
 </body>
 
 </html>

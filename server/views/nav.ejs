@@ -2,11 +2,14 @@
     <ul>
         <li><a href="/">Home</a></li>
         <li><a href="/posts/list">Posts</a></li>
-        <% if (user) { %>
+
+        <% if (user && user.username) { %>
+            <!-- If the user is logged in, show their username and the logout option -->
             <li>Welcome, <%= user.username %>
             </li>
             <li><a href="/auth/logout" class="logout-btn">Logout</a></li>
             <% } else { %>
+                <!-- If no user is logged in, show the login and sign-up links -->
                 <li><a href="/auth/login" class="login-btn">Login</a></li>
                 <li><a href="/auth/register" class="signup-btn">Sign Up</a></li>
                 <% } %>

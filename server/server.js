@@ -13,7 +13,8 @@ const flash = require('connect-flash');
 const passport = require('./config/passport');
 const cors = require('cors');
 const { getDB } = require('./config/db');
-const configureSocketIO = require('./config/socketio');
+// const configureSocketIO = require('./config/socketio');
+const WebSocket = require("ws");
 const ensureAuthenticated = require('./middleware/auth');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -23,11 +24,25 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid'); 
 const { CognitoIdentityProviderClient } = require('@aws-sdk/client-cognito-identity-provider');
-const authRoutes = require('./routes/authRoutes');
-
+// const authRoutes = require('./routes/authRoutes');
 const app = express();
 
 let cognitoClient; // Global declaration for Cognito
+
+const server = http.createServer(app);
+// WebSocket Server
+const wss = new WebSocket.Server({ server });
+wss.on("connection", (ws) => {
+  console.log("WebSocket connected");
+  ws.on("message", (message) => {
+    console.log("Received:", message);
+    ws.send(`Echo: ${message}`);
+  });
+  ws.on("close", () => {
+    console.log("WebSocket disconnected");
+  });
+});
+
 
 // Initialize AWS SDK
 async function initializeAWS() {
@@ -40,28 +55,6 @@ async function initializeAWS() {
     });
     console.log('AWS SDK initialized with credentials from Secrets Manager.');
 }
-
-
-// app.post('/login', async (req, res) => {
-//     const { username, password } = req.body;
-
-//     try {
-//         // Authenticate the user with Cognito
-//         const authResult = await authenticateUser(username, password);
-
-//         // Store token in the session or return it to the client
-//         req.session.token = authResult.AccessToken; // Store token in session (optional)
-//         res.json({
-//             success: true,
-//             idToken: authResult.IdToken,
-//             accessToken: authResult.AccessToken,
-//             refreshToken: authResult.RefreshToken, // If you need a refresh token
-//         });
-//     } catch (error) {
-//         console.error("Login failed:", error.message);
-//         res.status(500).json({ success: false, error: error.message });
-//     }
-// });
 
 
 // Ensure Cognito is initialized before login API
@@ -147,6 +140,7 @@ async function createDynamoDBClient() {
     return DynamoDBDocumentClient.from(client);
 }
 
+
 // IIFE to handle async initialization and start the server
 (async function startServer() {
     try {
@@ -162,13 +156,19 @@ async function createDynamoDBClient() {
 
         // Middleware Setup
         app.use(cors({
-            origin: ['https://www.coffeechat.cab432.com'],
+            // origin: ['https://www.coffeechat.cab432.com'],
+            origin: ["http://localhost:8080"],
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             credentials: true,
             optionsSuccessStatus: 204
         }));
 
         app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+       
+       app.use(
+      "/node_modules",
+      express.static(path.join(__dirname, "node_modules"))
+    );
         app.use(express.static(path.join(__dirname, 'public')));
         app.use(cookieParser());
         app.use(express.urlencoded({ extended: true }));
@@ -191,6 +191,12 @@ async function createDynamoDBClient() {
             res.locals.error_msg = req.flash('error_msg');
             next();
         });
+
+        // user auth
+        app.use((req, res, next) => {
+      res.locals.user = req.user || null; 
+      next();
+    });
 
         // Passport Setup
         app.use(passport.initialize());
@@ -283,7 +289,6 @@ async function createDynamoDBClient() {
 
         const PORT = await getParameterValue('/n11725605/PORT');
         const server = http.createServer(app);
-        configureSocketIO(server);
         server.listen(PORT, () => {
             console.log(`Server running at http://localhost:${PORT}`);
         });

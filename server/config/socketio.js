@@ -1,80 +1,82 @@
 
-const { Server } = require('socket.io');
-const passportSocketIo = require('passport.socketio');
-const cookieParser = require('cookie-parser');
-const MongoStore = require('connect-mongo');
-const { getDB } = require('../config/db'); // Already fetching DB configuration securely
-const { ObjectId } = require('mongodb');
-const { getParameterValue } = require('../config/secretsManager'); // Helper to fetch secrets
+const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
+const { createDynamoDBClient } = require("../controllers/dynamoController"); // DynamoDB client function
+const { PutCommand } = require("@aws-sdk/lib-dynamodb"); // DynamoDB PutCommand
+const axios = require("axios");
+const { getParameterValue } = require("../config/secretsManager"); // AWS Secrets Manager
 
 async function configureSocketIO(server) {
   const io = new Server(server);
 
-  // Fetch the session secret and DB URL securely from AWS
-  const sessionSecret = await getParameterValue('/n11725605/SESSION_SECRET');
-  const dbUrl = await getParameterValue('/n11725605/DB_URL');
 
-  io.use(passportSocketIo.authorize({
-    cookieParser: cookieParser,
-    key: 'connect.sid', // This is the default cookie name for express-session
-    secret: sessionSecret, // Use the securely fetched session secret
-    store: MongoStore.create({
-      mongoUrl: dbUrl, // Use the securely fetched MongoDB URL
-      dbName: 'coffeechat_ys', // Replace this if your database name differs
-    }),
-    success: (data, accept) => {
-      console.log('Successful connection to socket.io');
-      accept(null, true);
-    },
-    fail: (data, message, error, accept) => {
-      if (error) {
-        accept(new Error(message));
-      }
-      console.log('Failed connection to socket.io:', message);
-      accept(null, false);
+  const COGNITO_USER_POOL_ID = await getParameterValue(
+    "/n11725605/COGNITO_USER_POOL_ID"
+  );
+  const AWS_REGION = await getParameterValue("/n11725605/prac-region");
+  const QUT_USERNAME = await getParameterValue("/n11725605/QUT_USERNAME");
+  const TABLE_NAME = "n11725605-ChatMessages";
+
+
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error("Authentication token is required."));
     }
-  }));
 
-  io.on('connection', (socket) => {
-    console.log('WebSocket connected');
+    try {
+   
+      const decodedToken = jwt.verify(
+        token,
+        await getCognitoPublicKey(COGNITO_USER_POOL_ID, AWS_REGION)
+      );
+      socket.user = decodedToken; 
+      next();
+    } catch (error) {
+      console.error("JWT verification failed:", error);
+      next(new Error("Authentication failed."));
+    }
+  });
 
-    socket.on('ask-join', (room) => {
+
+  io.on("connection", (socket) => {
+    console.log("WebSocket connected");
+
+
+    socket.on("ask-join", (room) => {
       socket.join(room);
       console.log(`User joined room: ${room}`);
     });
 
-    socket.on('message-send', async (data) => {
+    socket.on("message-send", async (data) => {
       try {
-        const user = socket.request.user;
-        const timestamp = new Date();
+        console.log("Message received on server:", data);
 
-        if (!user) {
-          console.error('User not found.');
-          return;
-        }
-
-        const db = getDB(); // Fetch database connection
-        await db.collection('chatMessage').insertOne({
-          parentRoom: new ObjectId(data.room),
-          content: data.msg,
-          who: new ObjectId(user._id),
-          username: user.username,
-          timestamp: timestamp
-        });
+        const serverTimestamp = new Date().toISOString();
+        console.log("Server Timestamp:", serverTimestamp);
 
         const messageData = {
-          username: user.username || 'Anonymous', 
           msg: data.msg,
-          timestamp: timestamp
+          room: data.room,
+          username: data.username,
+          timestamp: serverTimestamp, 
         };
 
-        io.to(data.room).emit('newMessage', messageData);
+        console.log("Prepared message data:", messageData);
 
-      } catch (err) {
-        console.error('Error handling message-send event:', err);
+        io.to(data.room).emit("newMessage", messageData);
+        console.log("Message broadcasted to room:", data.room);
+      } catch (error) {
+        console.error("Error in message-send event:", error);
       }
     });
   });
+}
+
+async function getCognitoPublicKey(userPoolId, region) {
+  const url = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
+  const { data } = await axios.get(url);
+  return data.keys[0]; 
 }
 
 module.exports = configureSocketIO;

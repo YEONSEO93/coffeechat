@@ -34,7 +34,7 @@
                     <canvas id="gifCanvas" style="display:none;"></canvas>
                     <img id="gifPreview" class="gif-preview" style="display:none;" />
                     <div id="progressContainer" style="display:none;">
-                        <p>Processing: <span id="progressPercentage">0%</span> | <span id="downloadSize">0 KB</span></p>
+                        <p>Processing: <span id="progressPercentage">0%</span></p>
                         <progress id="progressBar" value="0" max="100"></progress>
                     </div>
                 </div>
@@ -49,9 +49,15 @@
                 const fileDragArea = document.getElementById('fileDragArea');
                 const filePreview = document.getElementById('filePreview');
                 const postForm = document.getElementById('postForm');
-
+                const gifCanvas = document.getElementById('gifCanvas');
+                const gifPreview = document.getElementById('gifPreview');
+                const progressBar = document.getElementById('progressBar');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const progressContainer = document.getElementById('progressContainer');
+                let gifBlob = null; // To store the generated GIF blob
                 let selectedFile = null;
 
+                // Handle image file selection and upload
                 fileInput.addEventListener('change', handleFileSelect);
                 fileDragArea.addEventListener('dragover', handleDragOver);
                 fileDragArea.addEventListener('drop', handleFileDrop);
@@ -95,6 +101,52 @@
                     }
                 }
 
+                // GIF creation logic
+                const createGifBtn = document.getElementById('createGifBtn');
+                createGifBtn.addEventListener('click', () => {
+                    const gifText = document.getElementById('gifText').value;
+                    const gif = new GIF({
+                        workers: 2,
+                        quality: 10,
+                        workerScript: "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
+                    });
+
+                    // Add text frames to the GIF
+                    for (let i = 0; i < 10; i++) {
+                        const context = gifCanvas.getContext('2d');
+                        context.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+                        context.font = '30px Arial';
+                        context.fillStyle = 'black';
+                        context.fillText(gifText, 50, 50 + (i * 5));
+                        gif.addFrame(gifCanvas, { copy: true, delay: 200 });
+                    }
+
+                    // Show progress
+                    gif.on('progress', (progress) => {
+                        const percentage = Math.round(progress * 100);
+                        progressBar.value = percentage;
+                        progressPercentage.textContent = `${percentage}%`;
+                    });
+
+                    gif.on('finished', async (blob) => {
+                        console.log('GIF created!');
+                        gifBlob = blob;
+
+                        // Display the generated GIF
+                        gifPreview.src = URL.createObjectURL(gifBlob);
+                        gifPreview.style.display = 'block';
+
+                        // Upload GIF to S3 using a pre-signed URL
+                        const preSignedUrl = await getPreSignedUrl('generated.gif');
+                        if (preSignedUrl) {
+                            await uploadGifToS3(gifBlob, preSignedUrl);
+                        }
+                    });
+
+                    gif.render(); // Start the GIF creation process
+                    progressContainer.style.display = 'block'; // Show the progress bar
+                });
+
                 // Function to get pre-signed URL from server
                 async function getPreSignedUrl(fileName) {
                     try {
@@ -106,7 +158,7 @@
                     }
                 }
 
-                // Upload file to S3 using the pre-signed URL
+                // Upload file (image or GIF) to S3 using the pre-signed URL
                 const uploadFileToS3 = async (file, preSignedUrl) => {
                     try {
                         const response = await fetch(preSignedUrl, {
@@ -126,6 +178,25 @@
                     }
                 };
 
+                // Upload GIF to S3 using the pre-signed URL
+                const uploadGifToS3 = async (gifBlob, preSignedUrl) => {
+                    try {
+                        const response = await fetch(preSignedUrl, {
+                            method: 'PUT',
+                            body: gifBlob,
+                            headers: {
+                                'Content-Type': 'image/gif',
+                            },
+                        });
+                        if (response.ok) {
+                            console.log('GIF uploaded successfully');
+                        } else {
+                            console.error('GIF upload failed');
+                        }
+                    } catch (error) {
+                        console.error('Error uploading GIF:', error);
+                    }
+                };
             });
         </script>
 </body>
