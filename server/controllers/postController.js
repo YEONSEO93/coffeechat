@@ -116,6 +116,32 @@ const getPostById = async (req, res) => {
     }
 };
 
+
+const addPost = async (req, res) => {
+    try {
+        const { content } = req.body;
+        
+        // Check if file and content are provided
+        if (!req.file || !content) {
+            return res.status(400).send('Missing file or content');
+        }
+
+        // Log the uploaded file and post content
+        console.log('File uploaded:', req.file);
+        console.log('Post content:', content);
+
+        // Process file and content (e.g., save to database, move file, etc.)
+        // Assuming the post is saved successfully, redirect to the list page
+        res.redirect('/posts/list');
+    } catch (error) {
+        console.error('Error adding post:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
+module.exports = { addPost };
+
+
 // Edit a post, allowing only the user who created it to make changes
 const editPost = async (req, res) => {
     try {
@@ -196,10 +222,12 @@ const deletePost = async (req, res) => {
     }
 };
 
+
 module.exports = {
     createPost,
     getPosts,
     getPostById,
     editPost,
     deletePost,
+    addPost
 };

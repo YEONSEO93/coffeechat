@@ -1,6 +1,4 @@
 
-
-
 const AWS = require('aws-sdk');
 const express = require('express');
 const path = require('path');
@@ -36,6 +34,18 @@ wss.on("connection", (ws) => {
   console.log("WebSocket connected");
   ws.on("message", (message) => {
     console.log("Received:", message);
+
+ try {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage.action === "upload") {
+        console.log("Upload message received:", parsedMessage.data);
+      } else if (parsedMessage.action === "chat") {
+        console.log("Chat message received:", parsedMessage.data);
+      }
+    } catch (error) {
+      console.log("Received non-JSON message:", message);
+    }
+
     ws.send(`Echo: ${message}`);
   });
   ws.on("close", () => {

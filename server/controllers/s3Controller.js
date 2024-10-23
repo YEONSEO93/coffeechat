@@ -51,27 +51,26 @@ const getPreSignedUrlWithUser = async (fileName, userId) => {
 
 // Upload the file to S3 using a pre-signed URL
 const uploadFileToS3 = async (fileBuffer, preSignedUrl, contentType) => {
-  try {
-    console.log("Uploading file to S3...");
-    console.log("File size:", fileBuffer.length);
+    try {
+        const response = await fetch(preSignedUrl, {
+            method: 'PUT',
+            body: fileBuffer,
+            headers: {
+                'Content-Type': contentType,
+                // 'x-amz-acl': 'public-read',
+            },
+        });
 
-    const response = await fetch(preSignedUrl, {
-      method: "PUT",
-      body: fileBuffer,
-      headers: {
-        "Content-Type": contentType,
-      },
-    });
+        if (!response.ok) {
+            const responseBody = await response.text();
+            throw new Error(`Failed to upload file: ${response.statusText}, Response: ${responseBody}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`Failed to upload file: ${response.statusText}`);
+        console.log('File uploaded successfully!');
+    } catch (err) {
+        console.error('Error uploading file:', err);
+        throw err;
     }
-
-    console.log("File uploaded successfully!");
-  } catch (err) {
-    console.error("Error uploading file:", err);
-    throw err;
-  }
 };
 
 // Function to generate a pre-signed URL for reading a file from S3

@@ -19,38 +19,47 @@
     </form>
 
     <script>
-        // WebSocket 서버에 연결
-        const ws = new WebSocket("ws://localhost:8080");
+        let ws;
 
-        // WebSocket 연결 열기
-        ws.onopen = () => {
-            console.log("WebSocket connection opened");
-        };
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8080");
 
-        // 서버로부터 메시지 수신
-        ws.onmessage = (event) => {
-            console.log("Message received from server:", event.data);
+            ws.onopen = () => {
+                console.log("WebSocket connection opened");
+            };
 
-            const chatMessages = document.getElementById("chat-messages");
-            const newMessage = document.createElement("div");
-            newMessage.textContent = `Server: ${event.data}`;
-            chatMessages.appendChild(newMessage);
-        };
+            ws.onmessage = (event) => {
+                console.log("Message received from server:", event.data);
+                const chatMessages = document.getElementById("chat-messages");
+                const newMessage = document.createElement("div");
+                newMessage.textContent = `Server: ${event.data}`;
+                chatMessages.appendChild(newMessage);
+            };
 
-        // WebSocket 연결 닫기
-        ws.onclose = () => {
-            console.log("WebSocket connection closed");
-        };
+            ws.onclose = (event) => {
+                console.log("WebSocket connection closed. Reconnecting in 3 seconds...", event.reason);
+                setTimeout(() => {
+                    connectWebSocket();
+                }, 3000);
+            };
 
-        // 메시지 전송 폼 제출 처리
-        document
-            .getElementById("chat-form")
-            .addEventListener("submit", function (e) {
-                e.preventDefault();
-                const message = document.getElementById("message").value;
-                ws.send(message); // WebSocket을 통해 메시지 전송
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+        }
+
+        connectWebSocket();
+
+        document.getElementById("chat-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const message = document.getElementById("message").value;
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
                 console.log("Message sent to server:", message);
-            });
+            } else {
+                console.error("WebSocket is not open. Message not sent.");
+            }
+        });
     </script>
 </body>
 

@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Write a Post</title>
-    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/main.css" />
     <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
     <script src="/js/main.js" defer></script>
 </head>
@@ -16,24 +16,26 @@
         <div class="form-container">
             <h1>Write a Post</h1>
             <form id="postForm" action="/posts/add" method="POST" enctype="multipart/form-data">
-                <input type="text" id="postTitle" name="title" placeholder="Title" required>
+                <input type="text" id="postTitle" name="title" placeholder="Title" required />
                 <textarea id="postContent" name="content" placeholder="Content" required></textarea>
 
                 <div class="file-upload-container" id="fileUploadContainer">
-                    <input type="file" id="fileInput" name="img1" accept="image/*">
+                    <input type="file" id="fileInput" name="img1" accept="image/*" />
                     <div class="file-drag-area" id="fileDragArea">
                         <p>Drag & Drop your image here or click to select</p>
-                        <img id="filePreview" src="" alt="Image Preview" style="display:none;">
+                        <img id="filePreview" src="" alt="Image Preview" style="display: none" />
                     </div>
                 </div>
 
                 <div class="gif-creation-container">
                     <h3>Create a GIF</h3>
                     <textarea id="gifText" placeholder="Enter your text here..."></textarea>
-                    <button type="button" id="createGifBtn" class="btn">Create GIF</button>
-                    <canvas id="gifCanvas" style="display:none;"></canvas>
-                    <img id="gifPreview" class="gif-preview" style="display:none;" />
-                    <div id="progressContainer" style="display:none;">
+                    <button type="button" id="createGifBtn" class="btn">
+                        Create GIF
+                    </button>
+                    <canvas id="gifCanvas" style="display: none"></canvas>
+                    <img id="gifPreview" class="gif-preview" style="display: none" />
+                    <div id="progressContainer" style="display: none">
                         <p>Processing: <span id="progressPercentage">0%</span></p>
                         <progress id="progressBar" value="0" max="100"></progress>
                     </div>
@@ -44,159 +46,112 @@
         </div>
 
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const fileInput = document.getElementById('fileInput');
-                const fileDragArea = document.getElementById('fileDragArea');
-                const filePreview = document.getElementById('filePreview');
-                const postForm = document.getElementById('postForm');
-                const gifCanvas = document.getElementById('gifCanvas');
-                const gifPreview = document.getElementById('gifPreview');
-                const progressBar = document.getElementById('progressBar');
-                const progressPercentage = document.getElementById('progressPercentage');
-                const progressContainer = document.getElementById('progressContainer');
-                let gifBlob = null; // To store the generated GIF blob
-                let selectedFile = null;
+            document.addEventListener("DOMContentLoaded", () => {
+                const fileInput = document.getElementById("fileInput");
+                const fileDragArea = document.getElementById("fileDragArea");
+                const filePreview = document.getElementById("filePreview");
+                const postForm = document.getElementById("postForm");
+                const gifCanvas = document.getElementById("gifCanvas");
+                const gifPreview = document.getElementById("gifPreview");
+                const progressBar = document.getElementById("progressBar");
+                const progressPercentage = document.getElementById("progressPercentage");
+                const progressContainer = document.getElementById("progressContainer");
+                let gifBlob = null;
 
-                // Handle image file selection and upload
-                fileInput.addEventListener('change', handleFileSelect);
-                fileDragArea.addEventListener('dragover', handleDragOver);
-                fileDragArea.addEventListener('drop', handleFileDrop);
+                // Initialize WebSocket connection
+                const webSocket = new WebSocket(
+                    "wss://5sfewaqotj.execute-api.ap-southeast-2.amazonaws.com/production/"
+                );
 
-                async function handleFileSelect(event) {
-                    const file = event.target.files[0];
-                    selectedFile = file;
-                    if (file) {
-                        filePreview.src = URL.createObjectURL(file);
-                        filePreview.style.display = 'block';
+                webSocket.onopen = function (event) {
+                    console.log("WebSocket connected:", event);
+                };
 
-                        // Get pre-signed URL from the server
-                        const preSignedUrl = await getPreSignedUrl(file.name);
-                        if (preSignedUrl) {
-                            // Upload the file to S3 using the pre-signed URL
-                            await uploadFileToS3(file, preSignedUrl);
-                        }
+                webSocket.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "upload-progress") {
+                        console.log(`Upload Progress: ${data.progress}%`);
+                        progressBar.value = data.progress;
+                        progressPercentage.textContent = `${data.progress}%`;
                     }
-                }
+                };
 
-                function handleDragOver(event) {
-                    event.preventDefault();
-                    fileDragArea.classList.add('drag-over');
-                }
+                webSocket.onclose = function (event) {
+                    console.log("WebSocket closed. Trying to reconnect...");
+                    setTimeout(() => {
+                        webSocket = new WebSocket(
+                            "wss://5sfewaqotj.execute-api.ap-southeast-2.amazonaws.com/production/"
+                        );
+                    }, 5000);
+                };
 
-                function handleFileDrop(event) {
+                // Submit form and handle file upload through WebSocket
+                postForm.addEventListener("submit", function (event) {
                     event.preventDefault();
-                    fileDragArea.classList.remove('drag-over');
+                    const postTitle = document.getElementById("postTitle").value;
+                    const postContent = document.getElementById("postContent").value;
+
+                    // Send form data via WebSocket
+                    if (webSocket.readyState === WebSocket.OPEN) {
+                        webSocket.send(JSON.stringify({ title: postTitle, content: postContent }));
+                    } else {
+                        console.error("WebSocket is not open.");
+                    }
+
+                    // Continue with form submission
+                    postForm.submit();
+                });
+
+                // Handle file drag and drop
+                fileDragArea.addEventListener("dragover", (event) => {
+                    event.preventDefault();
+                    fileDragArea.classList.add("drag-over");
+                });
+
+                fileDragArea.addEventListener("drop", (event) => {
+                    event.preventDefault();
+                    fileDragArea.classList.remove("drag-over");
+
                     const file = event.dataTransfer.files[0];
-                    selectedFile = file;
-                    if (file) {
-                        filePreview.src = URL.createObjectURL(file);
-                        filePreview.style.display = 'block';
+                    filePreview.src = URL.createObjectURL(file);
+                    filePreview.style.display = "block";
+                });
 
-                        // Get pre-signed URL from the server and upload the file
-                        getPreSignedUrl(file.name).then(preSignedUrl => {
-                            if (preSignedUrl) {
-                                uploadFileToS3(file, preSignedUrl);
-                            }
-                        });
-                    }
-                }
-
-                // GIF creation logic
-                const createGifBtn = document.getElementById('createGifBtn');
-                createGifBtn.addEventListener('click', () => {
-                    const gifText = document.getElementById('gifText').value;
+                // Handle GIF creation and progress bar
+                const createGifBtn = document.getElementById("createGifBtn");
+                createGifBtn.addEventListener("click", () => {
+                    const gifText = document.getElementById("gifText").value;
                     const gif = new GIF({
                         workers: 2,
                         quality: 10,
-                        workerScript: "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
+                        workerScript:
+                            "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
                     });
 
-                    // Add text frames to the GIF
                     for (let i = 0; i < 10; i++) {
-                        const context = gifCanvas.getContext('2d');
+                        const context = gifCanvas.getContext("2d");
                         context.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
-                        context.font = '30px Arial';
-                        context.fillStyle = 'black';
-                        context.fillText(gifText, 50, 50 + (i * 5));
+                        context.font = "30px Arial";
+                        context.fillStyle = "black";
+                        context.fillText(gifText, 50, 50 + i * 5);
                         gif.addFrame(gifCanvas, { copy: true, delay: 200 });
                     }
 
-                    // Show progress
-                    gif.on('progress', (progress) => {
+                    gif.on("progress", (progress) => {
                         const percentage = Math.round(progress * 100);
                         progressBar.value = percentage;
                         progressPercentage.textContent = `${percentage}%`;
                     });
 
-                    gif.on('finished', async (blob) => {
-                        console.log('GIF created!');
+                    gif.on("finished", async (blob) => {
                         gifBlob = blob;
-
-                        // Display the generated GIF
                         gifPreview.src = URL.createObjectURL(gifBlob);
-                        gifPreview.style.display = 'block';
-
-                        // Upload GIF to S3 using a pre-signed URL
-                        const preSignedUrl = await getPreSignedUrl('generated.gif');
-                        if (preSignedUrl) {
-                            await uploadGifToS3(gifBlob, preSignedUrl);
-                        }
+                        gifPreview.style.display = "block";
                     });
 
-                    gif.render(); // Start the GIF creation process
-                    progressContainer.style.display = 'block'; // Show the progress bar
+                    gif.render();
+                    progressContainer.style.display = "block";
                 });
-
-                // Function to get pre-signed URL from server
-                async function getPreSignedUrl(fileName) {
-                    try {
-                        const response = await fetch(`/posts/presigned-url?fileName=${fileName}`);
-                        const data = await response.json();
-                        return data.url; // Assuming the server returns { url: preSignedUrl }
-                    } catch (error) {
-                        console.error('Error fetching pre-signed URL:', error);
-                    }
-                }
-
-                // Upload file (image or GIF) to S3 using the pre-signed URL
-                const uploadFileToS3 = async (file, preSignedUrl) => {
-                    try {
-                        const response = await fetch(preSignedUrl, {
-                            method: 'PUT',
-                            body: file,
-                            headers: {
-                                'Content-Type': file.type,
-                            },
-                        });
-                        if (response.ok) {
-                            console.log('File uploaded successfully');
-                        } else {
-                            console.error('File upload failed');
-                        }
-                    } catch (error) {
-                        console.error('Error uploading file:', error);
-                    }
-                };
-
-                // Upload GIF to S3 using the pre-signed URL
-                const uploadGifToS3 = async (gifBlob, preSignedUrl) => {
-                    try {
-                        const response = await fetch(preSignedUrl, {
-                            method: 'PUT',
-                            body: gifBlob,
-                            headers: {
-                                'Content-Type': 'image/gif',
-                            },
-                        });
-                        if (response.ok) {
-                            console.log('GIF uploaded successfully');
-                        } else {
-                            console.error('GIF upload failed');
-                        }
-                    } catch (error) {
-                        console.error('Error uploading GIF:', error);
-                    }
-                };
             });
         </script>
 </body>
