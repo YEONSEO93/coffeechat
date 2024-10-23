@@ -248,6 +248,26 @@ async function createDynamoDBClient() {
             }
         });
 
+app.get("/posts/presigned-url", async (req, res) => {
+    const fileName = req.query.fileName; // 요청된 파일 이름
+    const s3Client = await createS3Client(); // S3 클라이언트 생성
+    const bucketName = await getParameterValue("/n11725605/AWS_BUCKET_NAME");
+
+    const params = {
+        Bucket: bucketName,
+        Key: fileName,
+        Expires: 60, // URL 만료 시간(초)
+    };
+
+    try {
+        const command = new AWS.S3.GetObjectCommand(params);
+        const preSignedUrl = await s3Client.getSignedUrl(command);
+        res.json({ url: preSignedUrl });
+    } catch (err) {
+        console.error("Error generating pre-signed URL:", err);
+        res.status(500).json({ error: "Error generating pre-signed URL" });
+    }
+});
 
 
         // Route for file upload using AWS S3
