@@ -7,10 +7,8 @@ const {
   DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const { v4: uuidv4 } = require("uuid");
-const { getPreSignedUrlWithUser, uploadFileToS3 } = require("./s3Controller"); // Assuming you have this controller for S3 uploads
-const { getSecretValue } = require('../config/secretsManager'); // Correctly import the function
-// const tableName = process.env.DYNAMO_TABLE_NAME;
-// const qutUsername = process.env.QUT_USERNAME; // Fixed partition key
+const { getPreSignedUrlWithUser, uploadFileToS3 } = require("./s3Controller");
+const { getSecretValue, getParameterValue } = require('../config/secretsManager'); // Import both functions
 
 // DynamoDB Client setup and conversion to DocumentClient
 async function createDynamoDBClient() {
@@ -46,14 +44,19 @@ async function addPost(req, res) {
     const preSignedUrl = await getPreSignedUrlWithUser(fileName, userId);
     await uploadFileToS3(req.file.buffer, preSignedUrl, req.file.mimetype);
 
+    // Retrieve the table name and bucket name from the Parameter Store
+    const tableName = await getParameterValue('/n11725605/DYNAMO_TABLE_NAME');
+    const bucketName = await getParameterValue('/n11725605/AWS_BUCKET_NAME');
+    const region = await getParameterValue('/n11725605/AWS_REGION');
+
     // Post data to DynamoDB
     const docClient = await createDynamoDBClient();
     const postData = {
-      "qut-username": qutUsername, // Partition key
+      "qut-username": await getParameterValue('/n11725605/QUT_USERNAME'), // Partition key
       postId: postId, // Sort key (UUID)
       title,
       content,
-      imageUrl: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${userId}/${fileName}`, // S3 file URL
+      imageUrl: `https://${bucketName}.s3.${region}.amazonaws.com/${userId}/${fileName}`, // S3 file URL
       timestamp: new Date().toISOString(),
       uploadedBy: userId, // Uploading user info
     };
@@ -73,12 +76,14 @@ async function getPost(req, res) {
   const { postId } = req.params;
 
   try {
+    const tableName = await getParameterValue('/n11725605/DYNAMO_TABLE_NAME');
+    const qutUsername = await getParameterValue('/n11725605/QUT_USERNAME');
     const docClient = await createDynamoDBClient();
     const params = {
       TableName: tableName,
       Key: {
-        "qut-username": qutUsername,
-        postId: postId,
+        "qut-username": qutUsername, // Partition key
+        postId: postId, // Sort key
       },
     };
 
@@ -97,6 +102,7 @@ async function getPost(req, res) {
 // Function to get all posts
 async function getAllPosts(req, res) {
   try {
+    const tableName = await getParameterValue('/n11725605/DYNAMO_TABLE_NAME');
     const docClient = await createDynamoDBClient();
     const params = {
       TableName: tableName,
@@ -117,20 +123,20 @@ async function getAllPosts(req, res) {
 // Function to add a test item (for debugging purposes)
 async function addTestItem() {
   const testItem = {
-    "qut-username": process.env.QUT_USERNAME, // Partition key value
-    postId: "testPost SY YS", // Test Post ID
+    "qut-username": await getParameterValue('/n11725605/QUT_USERNAME'), // Partition key value
+    postId: "testPost", // Test Post ID
     title: "Test Title",
     content: "This is test content for DynamoDB.",
     fileUrl: "https://example.com/test-image.jpg", // Test file URL
     timestamp: new Date().toISOString(),
     uploadedBy: "testUser@example.com", // Test uploader info
-    userId: "testUserId", // Test user ID
   };
 
   try {
+    const tableName = await getParameterValue('/n11725605/DYNAMO_TABLE_NAME');
     const docClient = await createDynamoDBClient();
     const command = new PutCommand({
-      TableName: process.env.DYNAMO_TABLE_NAME,
+      TableName: tableName,
       Item: testItem,
     });
 
@@ -144,17 +150,20 @@ async function addTestItem() {
   }
 }
 
+// Function to delete a post from DynamoDB
 async function deletePostFromDynamo(postId, qutUsername) {
-  const docClient = new DynamoDBClient({ region: process.env.AWS_REGION });
-  const params = {
-    TableName: process.env.DYNAMO_TABLE_NAME,
-    Key: {
-      "qut-username": qutUsername, // Partition key
-      postId: postId, // Sort key
-    },
-  };
-
   try {
+    const tableName = await getParameterValue("/n11725605/DYNAMO_TABLE_NAME"); // Add tableName here
+
+    const docClient = await createDynamoDBClient();
+    const params = {
+      TableName: tableName,
+      Key: {
+        "qut-username": qutUsername, // Partition key
+        postId: postId, // Sort key
+      },
+    };
+
     await docClient.send(new DeleteCommand(params));
     console.log(`Post ${postId} deleted successfully from DynamoDB`);
   } catch (error) {
@@ -165,9 +174,9 @@ async function deletePostFromDynamo(postId, qutUsername) {
 
 module.exports = {
   createDynamoDBClient,
-  addPost, // If needed in other files
-  getPost, // If needed in other files
-  getAllPosts, // If needed in other files
-  addTestItem, // If needed in other files
-  deletePostFromDynamo,
+  addPost, 
+  getPost, 
+  getAllPosts, 
+  addTestItem, 
+  deletePostFromDynamo, 
 };

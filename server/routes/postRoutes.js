@@ -263,7 +263,9 @@ router.delete("/delete/:postId", ensureAuthenticated, async (req, res) => {
     if (post.user !== userId) {
       return res.status(403).send("You are not authorized to delete this post");
     }
-
+    
+  // Fetch `qutUsername` from Parameter Store
+    const qutUsername = await getParameterValue("/n11725605/QUT_USERNAME");
     // Delete the post from MongoDB
     await getDB()
       .collection("post")

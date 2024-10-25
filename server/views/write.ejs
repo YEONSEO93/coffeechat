@@ -47,6 +47,8 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
+                let webSocket;
+
                 const fileInput = document.getElementById("fileInput");
                 const fileDragArea = document.getElementById("fileDragArea");
                 const filePreview = document.getElementById("filePreview");
@@ -54,88 +56,73 @@
                 const gifCanvas = document.getElementById("gifCanvas");
                 const gifPreview = document.getElementById("gifPreview");
                 const progressBar = document.getElementById("progressBar");
-                const progressPercentage =
-                    document.getElementById("progressPercentage");
+                const progressPercentage = document.getElementById("progressPercentage");
                 const progressContainer = document.getElementById("progressContainer");
+                const createGifBtn = document.getElementById("createGifBtn");
+
                 let gifBlob = null;
                 let selectedFile = null;
 
-                // Initialize WebSocket connection to AWS API Gateway WebSocket API
-                const webSocket = new WebSocket(
-                    "wss://obhui0pok8.execute-api.ap-southeast-2.amazonaws.com/production/"
-                );
+                // WebSocket connection and reconnection handling
+                function initWebSocket() {
+                    webSocket = new WebSocket("wss://obhui0pok8.execute-api.ap-southeast-2.amazonaws.com/production/");
 
-                webSocket.onopen = function (event) {
-                    console.log("WebSocket connected:", event);
-                };
+                    webSocket.onopen = function (event) {
+                        console.log("WebSocket connected:", event);
+                    };
 
-                webSocket.onmessage = function (event) {
-                    const data = JSON.parse(event.data);
+                    webSocket.onmessage = function (event) {
+                        const data = JSON.parse(event.data);
+                        if (data.type === "upload-progress") {
+                            console.log(`Upload Progress: ${data.progress}%`);
+                            progressBar.value = data.progress;
+                            progressPercentage.textContent = `${data.progress}%`;
+                        } else if (data.type === "chat") {
+                            console.log(`Chat message: ${data.message}`);
+                        }
+                    };
 
-                    if (data.type === "upload-progress") {
-                        console.log(`Upload Progress: ${data.progress}%`);
-                        progressBar.value = data.progress;
-                        progressPercentage.textContent = `${data.progress}%`;
-                    } else if (data.type === "chat") {
-                        console.log(`Chat message: ${data.message}`);
-                    }
-                };
+                    webSocket.onclose = function (event) {
+                        console.log("WebSocket closed:", event);
+                        setTimeout(() => {
+                            console.log("Attempting WebSocket reconnection...");
+                            initWebSocket(); // Retry the connection
+                        }, 5000);
+                    };
+                }
 
-                webSocket.onclose = function (event) {
-                    console.log("WebSocket closed:", event);
-                    alert("WebSocket connection closed. Trying to reconnect...");
+                initWebSocket(); // Initialize WebSocket
 
-                    // 재연결 로직
-                    setTimeout(() => {
-                        webSocket = new WebSocket(
-                            "wss://obhui0pok8.execute-api.ap-southeast-2.amazonaws.com/production/"
-                        );
-                    }, 5000); // 5초 후에 재연결 시도
-                };
-
-                // Function to send a message via WebSocket
-                // WebSocket을 통해 메시지 전송하는 함수
-                window.sendMessage = function (message) {
+                // Function to send messages via WebSocket
+                function sendMessage(message) {
                     if (webSocket.readyState === WebSocket.OPEN) {
-                        webSocket.send(
-                            JSON.stringify({ action: "sendMessage", data: message }) // 메시지를 JSON으로 포맷
-                        );
+                        webSocket.send(JSON.stringify({ action: "sendMessage", data: message }));
                         console.log("Message sent to server:", message);
                     } else {
                         console.error("WebSocket is not open. Message not sent.");
                     }
-                };
+                }
 
-                // When form is submitted, send message via WebSocket
+                // When form is submitted, send post data via WebSocket
                 postForm.addEventListener("submit", function (event) {
                     event.preventDefault();
                     const postTitle = document.getElementById("postTitle").value;
                     const postContent = document.getElementById("postContent").value;
-
-                    // Send post data as a message through WebSocket
-                    sendMessage(`Title: ${postTitle}, Content: ${postContent}`, "chat");
-
-                    // Proceed with form submission
-                    postForm.submit();
+                    sendMessage(`Title: ${postTitle}, Content: ${postContent}`);
+                    postForm.submit(); // Proceed with form submission
                 });
 
                 fileInput.addEventListener("change", handleFileSelect);
                 fileDragArea.addEventListener("dragover", handleDragOver);
                 fileDragArea.addEventListener("drop", handleFileDrop);
 
+                // Handle file select event
                 async function handleFileSelect(event) {
                     const file = event.target.files[0];
                     selectedFile = file;
                     if (file) {
                         filePreview.src = URL.createObjectURL(file);
                         filePreview.style.display = "block";
-
-                        sendMessage(file.name, "upload");
-
-                        const preSignedUrl = await getPreSignedUrl(file.name);
-                        if (preSignedUrl) {
-                            await uploadFileToS3(file, preSignedUrl);
-                        }
                     }
                 }
 
@@ -152,63 +139,106 @@
                     if (file) {
                         filePreview.src = URL.createObjectURL(file);
                         filePreview.style.display = "block";
-
-                        sendMessage(file.name, "upload");
-
-                        getPreSignedUrl(file.name).then((preSignedUrl) => {
-                            if (preSignedUrl) {
-                                uploadFileToS3(file, preSignedUrl);
-                            }
-                        });
                     }
                 }
 
-                const createGifBtn = document.getElementById("createGifBtn");
+
+                // Handle GIF creation when clicking the "Create GIF" button
                 createGifBtn.addEventListener("click", () => {
                     const gifText = document.getElementById("gifText").value;
-                    const gif = new GIF({
-                        workers: 2,
-                        quality: 10,
-                        workerScript:
-                            "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
-                    });
 
-                    for (let i = 0; i < 10; i++) {
-                        const context = gifCanvas.getContext("2d");
-                        context.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
-                        context.font = "30px Arial";
-                        context.fillStyle = "black";
-                        context.fillText(gifText, 50, 50 + i * 5);
-                        gif.addFrame(gifCanvas, { copy: true, delay: 200 });
+                    // Check if both text and image are available
+                    if (!gifText || !selectedFile) {
+                        console.error("Both text and image are required to create a GIF.");
+                        return;
                     }
 
-                    gif.on("progress", (progress) => {
-                        const percentage = Math.round(progress * 100);
-                        progressBar.value = percentage;
-                        progressPercentage.textContent = `${percentage}%`;
-                    });
+                    const img = new Image();
+                    img.src = URL.createObjectURL(selectedFile);
+                    img.onload = () => {
+                        const frames = [];
 
-                    gif.on("finished", async (blob) => {
-                        console.log("GIF created!");
-                        gifBlob = blob;
-                        gifPreview.src = URL.createObjectURL(gifBlob);
-                        gifPreview.style.display = "block";
+                        gifCanvas.width = img.width;
+                        gifCanvas.height = img.height;
 
-                        const preSignedUrl = await getPreSignedUrl("generated.gif");
-                        if (preSignedUrl) {
-                            await uploadGifToS3(gifBlob, preSignedUrl);
+                        // Add frames to the GIF
+                        for (let i = 0; i < 10; i++) {
+                            const context = gifCanvas.getContext("2d");
+                            if (!context) {
+                                console.error("Failed to get canvas context");
+                                return;
+                            }
+
+                            context.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+                            context.drawImage(img, 0, 0, gifCanvas.width, gifCanvas.height);
+
+                            // Add user text to the canvas
+                            context.font = "30px Arial";
+                            context.fillStyle = "black";
+                            context.fillText(gifText, 50, 50 + i * 5);
+
+                            frames.push({
+                                imageData: context.getImageData(0, 0, gifCanvas.width, gifCanvas.height),
+                                delay: 200,
+                            });
                         }
-                    });
 
-                    gif.render();
-                    progressContainer.style.display = "block";
+                        if (frames.length > 0) {
+                            const worker = new Worker("/js/gif.worker.js");
+                            worker.postMessage({ frames, workers: 2, quality: 10 });
+
+                            worker.onmessage = function (e) {
+                                const blob = e.data;
+                                if (blob instanceof Blob) {
+                                    const gifPreview = document.getElementById("gifPreview");
+                                    gifPreview.src = URL.createObjectURL(blob);
+                                    gifPreview.style.display = "block";
+                                } else {
+                                    console.error("Received data is not a valid Blob:", blob);
+                                }
+
+                                // Show GIF preview
+                                gifPreview.src = URL.createObjectURL(blob);
+                                gifPreview.style.display = "block";
+
+                                if (blob instanceof Blob) {
+                                    gifPreview.src = URL.createObjectURL(blob);
+                                } else {
+                                    console.error("Received data is not a valid Blob:", blob);
+                                }
+
+                                // Hide progress container
+                                progressContainer.style.display = "none";
+
+                                // Upload the created GIF
+                                uploadGifToS3(blob);
+                            };
+
+                            worker.onerror = function (error) {
+                                console.error("Worker error: ", error);
+                            };
+                        } else {
+                            console.error("No frames were generated.");
+                        }
+                    };
+
+                    img.onerror = (error) => {
+                        console.error("Error loading image: ", error);
+                    };
                 });
 
+                async function uploadGifToS3(blob) {
+                    const preSignedUrl = await getPreSignedUrl("generated.gif");
+                    if (preSignedUrl) {
+                        await uploadToS3(blob, preSignedUrl, "image/gif");
+                        console.log(`GIF uploaded successfully to ${preSignedUrl}`);
+                    }
+                }
+
+                // Fetch pre-signed URL for uploading files
                 async function getPreSignedUrl(fileName) {
                     try {
-                        const response = await fetch(
-                            `/posts/presigned-url?fileName=${fileName}`
-                        );
+                        const response = await fetch(`/posts/presigned-url?fileName=${fileName}`);
                         const data = await response.json();
                         return data.url;
                     } catch (error) {
@@ -216,43 +246,54 @@
                     }
                 }
 
-                const uploadFileToS3 = async (file, preSignedUrl) => {
+                // Function to upload the GIF or image to S3
+                const uploadToS3 = async (file, preSignedUrl, contentType) => {
                     try {
                         const response = await fetch(preSignedUrl, {
                             method: "PUT",
                             body: file,
                             headers: {
-                                "Content-Type": file.type,
+                                "Content-Type": contentType,
                             },
                         });
                         if (response.ok) {
-                            console.log("File uploaded successfully");
+                            console.log("GIF uploaded successfully to S3!");
                         } else {
-                            console.error("File upload failed");
-                        }
-                    } catch (error) {
-                        console.error("Error uploading file:", error);
-                    }
-                };
-
-                const uploadGifToS3 = async (gifBlob, preSignedUrl) => {
-                    try {
-                        const response = await fetch(preSignedUrl, {
-                            method: "PUT",
-                            body: gifBlob,
-                            headers: {
-                                "Content-Type": "image/gif",
-                            },
-                        });
-                        if (response.ok) {
-                            console.log("GIF uploaded successfully");
-                        } else {
-                            console.error("GIF upload failed");
+                            console.error("Failed to upload GIF to S3.");
                         }
                     } catch (error) {
                         console.error("Error uploading GIF:", error);
                     }
                 };
+
+                // Handle regular file upload
+                fileInput.addEventListener("change", async (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const preSignedUrl = await getPreSignedUrl(file.name);
+                        if (preSignedUrl) {
+                            await uploadToS3(file, preSignedUrl, file.type);
+                        }
+                    }
+                });
+
+                // Drag-and-drop file handling
+                fileDragArea.addEventListener("dragover", (event) => {
+                    event.preventDefault();
+                    fileDragArea.classList.add("drag-over");
+                });
+
+                fileDragArea.addEventListener("drop", async (event) => {
+                    event.preventDefault();
+                    fileDragArea.classList.remove("drag-over");
+                    const file = event.dataTransfer.files[0];
+                    if (file) {
+                        const preSignedUrl = await getPreSignedUrl(file.name);
+                        if (preSignedUrl) {
+                            await uploadToS3(file, preSignedUrl, file.type);
+                        }
+                    }
+                });
             });
         </script>
 </body>

@@ -1,4 +1,4 @@
-const endpoint = "http://n11725605-autoscale-assignment3-2133643054.ap-southeast-2.elb.amazonaws.com";
+const endpoint = "http://n11725605-autoscale-assignment3-2133643054.ap-southeast-2.elb.amazonaws.com:8080";
 const numberOfRequests = 20;   // Initial number of requests
 const timeBetweenRequests = 500;  // Time in ms between requests
 let totalTime = 0;

@@ -116,26 +116,27 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             gif.on('finished', function (blob) {
-                const url = URL.createObjectURL(blob);
-                gifPreview.src = url;
-                gifPreview.style.display = 'block';
-                gifPreview.onload = function () {
-                    URL.revokeObjectURL(url);
-                };
+                if (blob instanceof Blob) {
+                    const url = URL.createObjectURL(blob);
+                    gifPreview.src = url;
+                    gifPreview.style.display = 'block';
+                    gifPreview.onload = function () {
+                        URL.revokeObjectURL(url);
+                    };
 
-                console.log('GIF created successfully.');
+                    console.log('GIF created successfully.');
 
-                const formData = new FormData();
-                formData.append('img1', blob, 'created.gif');
-                formData.append('title', document.getElementById('title').value);
-                formData.append('content', document.getElementById('content').value);
+                    const formData = new FormData();
+                    formData.append('img1', blob, 'created.gif');
+                    formData.append('title', document.getElementById('title').value);
+                    formData.append('content', document.getElementById('content').value);
 
-                document.getElementById('postForm').onsubmit = function (e) {
-                    e.preventDefault();
                     submitPost(formData);
-                };
 
-                progressContainer.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                } else {
+                    console.error('Received data is not a valid Blob:', blob);
+                }
             });
 
             gif.render();
