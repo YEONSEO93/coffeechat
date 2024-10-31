@@ -442,8 +442,8 @@ app.get('/posts/presigned-url', async (req, res) => {
 
 
  app.get("/posts/presigned-url", async (req, res) => {
-      const fileName = req.query.fileName; // 요청된 파일 이름
-      const s3Client = await createS3Client(); // S3 클라이언트 생성
+      const fileName = req.query.fileName; 
+      const s3Client = await createS3Client(); 
       const bucketName = await getParameterValue("/n11725605/AWS_BUCKET_NAME");
       const params = {
         Bucket: bucketName,
